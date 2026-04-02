@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESSENCIO | Engenharia de Ativos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
+        :root { --musgo: #435A42; --dourado: #BA9D58; --fundo: #0d120e; }
+        body { font-family: 'Montserrat', sans-serif; background-color: var(--fundo); color: #ffffff; margin: 0; }
+        .logo-container { filter: drop-shadow(0 0 15px rgba(186, 157, 88, 0.3)); }
+        .accordion-content { transition: max-height 0.4s ease; overflow: hidden; max-height: 0; }
+        .accordion-open .accordion-content { max-height: 1000px; }
+        .rotate-icon { transition: transform 0.3s; }
+        .accordion-open .rotate-icon { transform: rotate(180deg); }
+        .input-style { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); color: white; transition: all 0.3s; }
+        .input-style:focus { border-color: var(--dourado); outline: none; }
+    </style>
+</head>
+<body class="pb-20">
+
+  <header class="py-12 px-6 flex flex-col items-center bg-gradient-to-b from-black/60 to-transparent">
+    <div class="logo-container w-28 h-28 mb-4">
+      <img src="https://i.imgur.com/LNNpmQr.jpeg" alt="Logo Essencio" class="w-full h-full object-contain">
+    </div>
+    <div class="text-center">
+      <h1 class="text-4xl font-black tracking-[0.15em] text-[#BA9D58] mb-1">ESSENCIO</h1>
+      <p class="text-[11px] font-bold uppercase tracking-[0.4em] text-white/50 border-t border-white/10 pt-2">ENGENHARIA DE ATIVOS</p>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto px-4">
+    <div class="bg-white/5 p-6 rounded-[35px] border border-white/10 mb-8 shadow-2xl backdrop-blur-sm">
+      <form id="formEstoque" class="space-y-4">
+        <div class="relative group h-14">
+          <input type="file" id="fotoInput" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30">
+          <div id="fotoPreviewContainer" class="w-full h-full rounded-2xl input-style flex items-center justify-center gap-4 group-hover:border-[#BA9D58]">
+            <img id="fotoPreviewImage" src="#" class="w-10 h-10 rounded-lg object-cover hidden border border-white/20">
+            <span id="fotoPreviewText" class="text-[10px] text-white/40 font-black uppercase tracking-widest italic">📷 Foto do Equipamento</span>
+          </div>
+        </div>
+
+        <input type="text" id="nome" placeholder="MODELO DO EQUIPAMENTO" required class="w-full h-14 px-5 rounded-2xl input-style font-bold uppercase text-sm">
+        
+        <div class="grid grid-cols-2 gap-3">
+            <input type="text" id="patrimonio" placeholder="PATRIMÔNIO" required class="w-full h-14 px-5 rounded-2xl input-style font-mono text-sm">
+            <input type="text" id="serial" placeholder="SÉRIE" required class="w-full h-14 px-5 rounded-2xl input-style font-mono text-sm">
+        </div>
+
+        <select id="local" required class="w-full h-14 px-5 rounded-2xl input-style font-bold text-xs uppercase appearance-none cursor-pointer">
+            <option value="" disabled selected>DESTINO / LOCAL</option>
+            <option value="Almoxarifado" class="bg-[#0d120e]">Almoxarifado</option>
+            <option value="Captação" class="bg-[#0d120e]">Captação</option>
+            <option value="Interface" class="bg-[#0d120e]">Interface</option>
+            <option value="Ponto P1" class="bg-[#0d120e]">Ponto P1</option>
+            <option value="Ponto P3" class="bg-[#0d120e]">Ponto P3</option>
+            <option value="Ponto P5" class="bg-[#0d120e]">Ponto P5</option>
+            <option value="Ponto P7" class="bg-[#0d120e]">Ponto P7</option>
+        </select>
+
+        <button type="submit" id="btnEnviar" class="w-full h-15 bg-[#BA9D58] text-black font-black rounded-2xl uppercase tracking-widest text-sm active:scale-95 transition-all shadow-[0_10px_20px_rgba(186,157,88,0.2)]">
+          CADASTRAR ATIVO
+        </button>
+      </form>
+    </div>
+    <div id="lista" class="space-y-4 pb-10"></div>
+  </main>
+
+  <script>
+    let estoque = {};
+    let fotoBase64Data = "";
+    
+    // 🔗 COLOQUE SEU LINK DO GOOGLE AQUI ABAIXO:
+    const URL_PLANILHA = "COLE_SEU_URL_AQUI";
+
+    document.getElementById('fotoInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          fotoBase64Data = event.target.result;
+          document.getElementById('fotoPreviewImage').src = fotoBase64Data;
+          document.getElementById('fotoPreviewImage').classList.remove('hidden');
+          document.getElementById('fotoPreviewText').classList.add('hidden');
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    document.getElementById('formEstoque').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btnEnviar');
+      btn.innerText = "ENVIANDO...";
+      btn.disabled = true;
+
+      const dados = {
+        modelo: document.getElementById('nome').value.toUpperCase(),
+        patrimonio: document.getElementById('patrimonio').value,
+        serial: document.getElementById('serial').value,
+        local: document.getElementById('local').value,
+        foto: fotoBase64Data
+      };
+
+      // Envia para o Google Sheets
+      fetch(URL_PLANILHA, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify(dados)
+      })
+      .then(() => {
+        alert("Sucesso! Verifique sua planilha.");
+        if (!estoque[dados.modelo]) estoque[dados.modelo] = [];
+        estoque[dados.modelo].push({ id: Date.now(), ...dados });
+        e.target.reset();
+        fotoBase64Data = "";
+        document.getElementById('fotoPreviewImage').classList.add('hidden');
+        document.getElementById('fotoPreviewText').classList.remove('hidden');
+        renderizar();
+      })
+      .catch(() => alert("Erro ao conectar."))
+      .finally(() => {
+        btn.innerText = "CADASTRAR ATIVO";
+        btn.disabled = false;
+      });
+    });
+
+    function renderizar() {
+      const lista = document.getElementById('lista');
+      lista.innerHTML = '';
+      Object.keys(estoque).forEach((modelo, idx) => {
+        const itens = estoque[modelo];
+        const id = `mod-${idx}`;
+        const card = document.createElement('div');
+        card.className = "bg-white/5 rounded-[25px] border border-white/5 overflow-hidden";
+        card.id = id;
+        card.innerHTML = `
+          <div class="p-5 flex justify-between items-center cursor-pointer" onclick="document.getElementById('${id}').classList.toggle('accordion-open')">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 bg-[#435A42] rounded-xl flex items-center justify-center font-black text-[#BA9D58]">${itens.length}</div>
+                <h4 class="font-bold uppercase text-sm">${modelo}</h4>
+            </div>
+            <span class="rotate-icon text-white/30">▼</span>
+          </div>
+          <div class="accordion-content bg-black/40">
+            ${itens.map(u => `<div class="p-4 border-t border-white/5 flex justify-between text-[10px]">
+                <span>${u.patrimonio}</span>
+                <span class="bg-[#435A42] px-2 py-1 rounded">${u.local}</span>
+            </div>`).join('')}
+          </div>`;
+        lista.appendChild(card);
+      });
+    }
+  </script>
+</body>
+</html>
