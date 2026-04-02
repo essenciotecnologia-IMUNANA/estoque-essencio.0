@@ -3,19 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESSENCIO | Engenharia de Ativos</title>
+    <title>ESSENCIO | Tecnologia Ambiental</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
         :root { --musgo: #435A42; --dourado: #BA9D58; --fundo: #0d120e; }
         body { font-family: 'Montserrat', sans-serif; background-color: var(--fundo); color: #ffffff; margin: 0; }
         .logo-container { filter: drop-shadow(0 0 15px rgba(186, 157, 88, 0.3)); }
-        .accordion-content { transition: max-height 0.4s ease; overflow: hidden; max-height: 0; }
-        .accordion-open .accordion-content { max-height: 1000px; }
-        .rotate-icon { transition: transform 0.3s; }
-        .accordion-open .rotate-icon { transform: rotate(180deg); }
         .input-style { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); color: white; transition: all 0.3s; }
-        .input-style:focus { border-color: var(--dourado); outline: none; }
+        .input-style:focus { border-color: var(--dourado); outline: none; background: rgba(255,255,255,0.06); }
     </style>
 </head>
 <body class="pb-20">
@@ -26,7 +22,7 @@
     </div>
     <div class="text-center">
       <h1 class="text-4xl font-black tracking-[0.15em] text-[#BA9D58] mb-1">ESSENCIO</h1>
-      <p class="text-[11px] font-bold uppercase tracking-[0.4em] text-white/50 border-t border-white/10 pt-2">ENGENHARIA DE ATIVOS</p>
+      <p class="text-[11px] font-bold uppercase tracking-[0.4em] text-[#BA9D58]/70 border-t border-white/10 pt-2">TECNOLOGIA AMBIENTAL</p>
     </div>
   </header>
 
@@ -64,15 +60,13 @@
         </button>
       </form>
     </div>
-    <div id="lista" class="space-y-4 pb-10"></div>
   </main>
 
   <script>
-    let estoque = {};
     let fotoBase64Data = "";
-    
-    // 🔗 COLOQUE SEU LINK DO GOOGLE AQUI ABAIXO:
-    const URL_PLANILHA = "COLE_SEU_URL_AQUI";
+
+    // 🔗 !!! ATENÇÃO !!! COLE O LINK DO GOOGLE ABAIXO ENTRE AS ASPAS:
+    const URL_PLANILHA = "COLE_AQUI_O_LINK_DO_GOOGLE_SCRIPT";
 
     document.getElementById('fotoInput').addEventListener('change', (e) => {
       const file = e.target.files[0];
@@ -102,55 +96,24 @@
         foto: fotoBase64Data
       };
 
-      // Envia para o Google Sheets
       fetch(URL_PLANILHA, {
         method: 'POST',
         mode: 'no-cors',
         body: JSON.stringify(dados)
       })
       .then(() => {
-        alert("Sucesso! Verifique sua planilha.");
-        if (!estoque[dados.modelo]) estoque[dados.modelo] = [];
-        estoque[dados.modelo].push({ id: Date.now(), ...dados });
+        alert("Ativo cadastrado com sucesso!");
         e.target.reset();
         fotoBase64Data = "";
         document.getElementById('fotoPreviewImage').classList.add('hidden');
         document.getElementById('fotoPreviewText').classList.remove('hidden');
-        renderizar();
       })
-      .catch(() => alert("Erro ao conectar."))
+      .catch(() => alert("Erro na conexão."))
       .finally(() => {
         btn.innerText = "CADASTRAR ATIVO";
         btn.disabled = false;
       });
     });
-
-    function renderizar() {
-      const lista = document.getElementById('lista');
-      lista.innerHTML = '';
-      Object.keys(estoque).forEach((modelo, idx) => {
-        const itens = estoque[modelo];
-        const id = `mod-${idx}`;
-        const card = document.createElement('div');
-        card.className = "bg-white/5 rounded-[25px] border border-white/5 overflow-hidden";
-        card.id = id;
-        card.innerHTML = `
-          <div class="p-5 flex justify-between items-center cursor-pointer" onclick="document.getElementById('${id}').classList.toggle('accordion-open')">
-            <div class="flex items-center gap-4">
-                <div class="w-10 h-10 bg-[#435A42] rounded-xl flex items-center justify-center font-black text-[#BA9D58]">${itens.length}</div>
-                <h4 class="font-bold uppercase text-sm">${modelo}</h4>
-            </div>
-            <span class="rotate-icon text-white/30">▼</span>
-          </div>
-          <div class="accordion-content bg-black/40">
-            ${itens.map(u => `<div class="p-4 border-t border-white/5 flex justify-between text-[10px]">
-                <span>${u.patrimonio}</span>
-                <span class="bg-[#435A42] px-2 py-1 rounded">${u.local}</span>
-            </div>`).join('')}
-          </div>`;
-        lista.appendChild(card);
-      });
-    }
   </script>
 </body>
 </html>
