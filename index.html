@@ -3,89 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESSENCIO | Tecnologia Ambiental</title>
+    <title>ESSENCIO | Sistema de Ativos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
         :root { --musgo: #435A42; --dourado: #BA9D58; --fundo: #0d120e; }
-        body { font-family: 'Montserrat', sans-serif; background-color: var(--fundo); color: #ffffff; margin: 0; }
+        body { font-family: 'Montserrat', sans-serif; background-color: var(--fundo); color: #ffffff; margin: 0; padding-bottom: 80px; }
         .logo-container { filter: drop-shadow(0 0 15px rgba(186, 157, 88, 0.3)); }
         .input-style { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); color: white; transition: all 0.3s; }
         .input-style:focus { border-color: var(--dourado); outline: none; background: rgba(255,255,255,0.06); }
-        
-        /* Estilo para o Preview da Foto */
-        #fotoPreviewImage { width: 100%; height: 100%; object-fit: cover; border-radius: 16px; }
+        .tab-active { color: var(--dourado); border-bottom: 2px solid var(--dourado); }
+        /* Estilos para os cartões da lista (igual sua referência) */
+        .card-ativo { background: #1e281e; border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 15px; display: flex; align-items: center; gap: 15px; margin-bottom: 10px; transition: 0.3s; }
+        .card-ativo:active { background: #2a3a2a; }
+        .card-foto { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; border: 1px solid #BA9D58; }
     </style>
 </head>
-<body class="pb-20">
+<body>
 
-  <header class="py-12 px-6 flex flex-col items-center bg-gradient-to-b from-black/60 to-transparent">
-    <div class="logo-container w-28 h-28 mb-4">
+  <header class="py-8 px-6 flex flex-col items-center bg-gradient-to-b from-black/60 to-transparent">
+    <div class="logo-container w-24 h-24 mb-3">
       <img src="https://i.imgur.com/LNNpmQr.jpeg" alt="Logo Essencio" class="w-full h-full object-contain">
     </div>
     <div class="text-center">
-      <h1 class="text-4xl font-black tracking-[0.15em] text-[#BA9D58] mb-1">ESSENCIO</h1>
-      <p class="text-[11px] font-bold uppercase tracking-[0.4em] text-[#BA9D58]/70 border-t border-white/10 pt-2">TECNOLOGIA AMBIENTAL</p>
+      <h1 class="text-3xl font-black tracking-[0.15em] text-[#BA9D58]">ESSENCIO</h1>
+      <p class="text-[10px] font-bold uppercase tracking-[0.4em] text-[#BA9D58]/70 pt-1">TECNOLOGIA AMBIENTAL</p>
     </div>
   </header>
 
+  <nav class="flex justify-center gap-6 mb-8 px-4 border-b border-white/10">
+      <button onclick="mudarAba('cadastro')" id="tabCadastro" class="pb-2 font-bold text-xs uppercase tracking-widest tab-active">Novo Cadastro</button>
+      <button onclick="mudarAba('lista'); carregarLista();" id="tabLista" class="pb-2 font-bold text-xs uppercase tracking-widest text-white/50">Lista de Ativos</button>
+  </nav>
+
   <main class="max-w-md mx-auto px-4">
-    <div class="bg-white/5 p-6 rounded-[35px] border border-white/10 mb-8 shadow-2xl backdrop-blur-sm">
+    
+    <div id="secaoCadastro" class="bg-white/5 p-6 rounded-[35px] border border-white/10 mb-8 shadow-2xl backdrop-blur-sm">
       <form id="formEstoque" class="space-y-4">
         
-        <div class="relative group h-40 mb-6">
+        <input type="hidden" id="ativoId">
+
+        <div class="relative h-40 mb-6">
           <input type="file" id="fotoInput" accept="image/*" capture="environment" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30">
-          <div id="fotoPreviewContainer" class="w-full h-full rounded-2xl input-style flex flex-col items-center justify-center gap-2 group-hover:border-[#BA9D58] overflow-hidden">
-            <img id="fotoPreviewImage" src="#" class="hidden border border-white/20">
-            <div id="fotoPlaceholder" class="flex flex-col items-center">
-                <span class="text-3xl mb-2">📷</span>
-                <span class="text-[10px] text-white/40 font-black uppercase tracking-widest italic text-center px-4">Toque para tirar foto do equipamento</span>
+          <div id="fotoPreviewContainer" class="w-full h-full rounded-2xl input-style flex flex-col items-center justify-center gap-2 overflow-hidden">
+            <img id="fotoPreviewImage" src="#" class="hidden w-full h-full object-cover">
+            <div id="fotoPlaceholder" class="flex flex-col items-center text-center px-4">
+                <span class="text-3xl mb-1">📷</span>
+                <span class="text-[9px] text-white/40 font-black uppercase tracking-widest italic">Toque para (re)tirar foto</span>
             </div>
           </div>
         </div>
 
         <input type="text" id="nome" placeholder="MODELO DO EQUIPAMENTO" required class="w-full h-14 px-5 rounded-2xl input-style font-bold uppercase text-sm">
-        
         <div class="grid grid-cols-2 gap-3">
-            <input type="text" id="patrimonio" placeholder="PATRIMÔNIO" required class="w-full h-14 px-5 rounded-2xl input-style font-mono text-sm uppercase">
+            <input type="text" id="patrimonio" placeholder="PATRIMÔNIO (ÚNICO)" required class="w-full h-14 px-5 rounded-2xl input-style font-mono text-sm uppercase">
             <input type="text" id="serial" placeholder="SÉRIE" required class="w-full h-14 px-5 rounded-2xl input-style font-mono text-sm uppercase">
         </div>
-
-        <select id="local" required class="w-full h-14 px-5 rounded-2xl input-style font-bold text-xs uppercase appearance-none cursor-pointer">
-            <option value="" disabled selected>DESTINO / LOCAL</option>
-            <option value="Almoxarifado" class="bg-[#0d120e]">Almoxarifado</option>
-            <option value="Captação" class="bg-[#0d120e]">Captação</option>
-            <option value="Interface" class="bg-[#0d120e]">Interface</option>
-            <option value="Ponto P1" class="bg-[#0d120e]">Ponto P1</option>
-            <option value="Ponto P3" class="bg-[#0d120e]">Ponto P3</option>
-            <option value="Ponto P5" class="bg-[#0d120e]">Ponto P5</option>
-            <option value="Ponto P7" class="bg-[#0d120e]">Ponto P7</option>
-        </select>
+        <input type="text" id="local" placeholder="DESTINO" required class="w-full h-14 px-5 rounded-2xl input-style font-bold uppercase text-sm">
 
         <button type="submit" id="btnEnviar" class="w-full h-16 bg-[#BA9D58] text-black font-black rounded-2xl uppercase tracking-widest text-sm active:scale-95 transition-all shadow-[0_10px_20px_rgba(186,157,88,0.2)]">
           CADASTRAR ATIVO
         </button>
+        <button type="button" id="btnCancelarEdicao" onclick="cancelarEdicao()" class="hidden w-full h-12 bg-white/10 text-white font-bold rounded-2xl uppercase text-xs">
+          CANCELAR EDIÇÃO
+        </button>
       </form>
+    </div>
+
+    <div id="secaoLista" class="hidden">
+        <div class="mb-5 relative">
+            <input type="text" id="inputPesquisa" onkeyup="filtrarLista()" placeholder="PESQUISAR ATIVO OU PATRIMÔNIO..." class="w-full h-12 px-5 pl-12 rounded-full input-style text-xs font-bold uppercase">
+            <span class="absolute left-5 top-1/2 -translate-y-1/2 opacity-30">🔍</span>
+        </div>
+        
+        <div id="listaAtivosContainer" class="space-y-3">
+            <p class="text-center text-xs text-white/40 italic py-10">Carregando estoque...</p>
+        </div>
     </div>
   </main>
 
   <script>
-    let fotoBase64ParaUpload = "";
+    let fotoBase64Data = "";
+    let listaCompleta = []; // Guarda todos os ativos recebidos
 
-    // 🔑 CONFIGURAÇÕES
-    const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbw_eawx8FWuhPag8mm5rdE1DA4fp-XkfKwQxs_Ew7yu5uYh9Yq91W3JhBYc-oaD6PCj6Q/exec";
-    const API_KEY_IMGBB = "b7eb71f8a559e9aa72a9d83ea40f712e"; 
+    // CONFIGURAÇÕES
+    const URL_SCRIPT_GOOGLE = "COLE_SUA_NOVA_URL_DO_APPS_SCRIPT_AQUI"; // URL do Passo 1
+    const API_KEY_IMGBB = "COLE_SUA_CHAVE_IMGBB_AQUI"; // Do cadastro anterior
 
-    // Capturar Foto e Mostrar Preview
+    // 1. Alternar entre Abas
+    function mudarAba(aba) {
+        if(aba === 'cadastro') {
+            document.getElementById('secaoCadastro').classList.remove('hidden');
+            document.getElementById('secaoLista').classList.add('hidden');
+            document.getElementById('tabCadastro').classList.add('tab-active');
+            document.getElementById('tabLista').classList.remove('tab-active');
+        } else {
+            document.getElementById('secaoCadastro').classList.add('hidden');
+            document.getElementById('secaoLista').classList.remove('hidden');
+            document.getElementById('tabCadastro').classList.remove('tab-active');
+            document.getElementById('tabLista').classList.add('tab-active');
+        }
+    }
+
+    // 2. Carregar e Desenhar a Lista (Estilo sua Referência)
+    async function carregarLista() {
+        const container = document.getElementById('listaAtivosContainer');
+        container.innerHTML = '<p class="text-center text-xs text-white/40 italic py-10">Carregando estoque...</p>';
+        
+        try {
+            const res = await fetch(URL_SCRIPT_GOOGLE); // doGet do Script
+            listaCompleta = await res.json();
+            desenharLista(listaCompleta);
+        } catch(e) { container.innerHTML = '<p class="text-center text-red-500 text-xs">Erro ao conectar com a planilha.</p>'; }
+    }
+
+    function desenharLista(ativos) {
+        const container = document.getElementById('listaAtivosContainer');
+        container.innerHTML = ""; // Limpa anterior
+
+        if(ativos.length === 0) { container.innerHTML = '<p class="text-center text-xs text-white/40 italic py-10">Nenhum ativo cadastrado.</p>'; return; }
+
+        ativos.forEach(ativo => {
+            const idCurto = ativo.id.substring(ativo.id.length - 4); // Últimos 4 dígitos do ID
+            
+            // HTML do Cartão (igual sua referência)
+            container.innerHTML += `
+                <div class="card-ativo" onclick="prepararEdicao('${ativo.id}')">
+                    <img src="${ativo.foto || 'https://via.placeholder.com/60?text=S/F'}" class="card-foto">
+                    <div class="flex-1">
+                        <div class="text-[9px] text-white/40 font-bold uppercase tracking-wider mb-1">ID ÚNICO: ...${idCurto}</div>
+                        <div class="text-sm font-black uppercase tracking-tight text-[#BA9D58]">${ativo.modelo}</div>
+                        <div class="grid grid-cols-2 gap-x-3 text-[10px] text-white/70 font-bold uppercase">
+                            <span>PAT: ${ativo.patrimonio}</span>
+                            <span>S/N: ${ativo.serial}</span>
+                        </div>
+                    </div>
+                    <span class="text-[#BA9D58]/30 text-xl">➔</span>
+                </div>
+            `;
+        });
+    }
+
+    // 3. Filtrar Lista (Pesquisa)
+    function filtrarLista() {
+        const termo = document.getElementById('inputPesquisa').value.toUpperCase();
+        const filtrados = listaCompleta.filter(a => 
+            a.modelo.toUpperCase().includes(termo) || 
+            a.patrimonio.toUpperCase().includes(termo) || 
+            a.serial.toUpperCase().includes(termo)
+        );
+        desenharLista(filtrados);
+    }
+
+    // 4. Preparar Edição (Puxa os dados para o formulário)
+    function prepararEdicao(id) {
+        const ativo = listaCompleta.find(a => a.id === id);
+        if(!ativo) return;
+
+        mudarAba('cadastro'); // Volta para a aba de cadastro
+        
+        // Preenche o formulário
+        document.getElementById('ativoId').value = ativo.id;
+        document.getElementById('nome').value = ativo.modelo;
+        document.getElementById('patrimonio').value = ativo.patrimonio;
+        document.getElementById('serial').value = ativo.serial;
+        document.getElementById('local').value = ativo.local;
+        
+        // Foto
+        fotoBase64Data = ""; // Limpa nova foto
+        document.getElementById('fotoPreviewImage').src = ativo.foto;
+        document.getElementById('fotoPreviewImage').classList.remove('hidden');
+        document.getElementById('fotoPlaceholder').classList.add('hidden');
+
+        // Muda os botões
+        document.getElementById('btnEnviar').innerText = "SALVAR ALTERAÇÕES";
+        document.getElementById('btnEnviar').classList.remove('bg-[#BA9D58]');
+        document.getElementById('btnEnviar').classList.add('bg-blue-600'); // Cor de edição
+        document.getElementById('btnCancelarEdicao').classList.remove('hidden');
+    }
+
+    function cancelarEdicao() {
+        location.reload(); // Recarrega para limpar tudo
+    }
+
+    // --- CÓDIGO DO FORMULÁRIO (ATUALIZADO PARA CADASTRO/EDIÇÃO) ---
+
+    // Capturar Foto e Preview
     document.getElementById('fotoInput').addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) {
         const reader = new FileReader();
         reader.onload = (event) => {
-          const base64completo = event.target.result;
-          fotoBase64ParaUpload = base64completo.split(',')[1]; // Tira o cabeçalho para a API
-          
-          document.getElementById('fotoPreviewImage').src = base64completo;
+          fotoBase64Data = event.target.result;
+          document.getElementById('fotoPreviewImage').src = fotoBase64Data;
           document.getElementById('fotoPreviewImage').classList.remove('hidden');
           document.getElementById('fotoPlaceholder').classList.add('hidden');
         };
@@ -93,53 +203,62 @@
       }
     });
 
+    // Enviar/Atualizar Dados
     document.getElementById('formEstoque').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = document.getElementById('btnEnviar');
+      const ativoId = document.getElementById('ativoId').value;
+      const acao = ativoId ? "atualizar" : "cadastrar"; // Define se é novo ou edição
       
-      if(!fotoBase64ParaUpload) {
-          alert("Por favor, tire a foto do equipamento primeiro.");
-          return;
-      }
-
-      btn.innerText = "ENVIANDO IMAGEM...";
+      btn.innerText = "PROCESSANDO...";
       btn.disabled = true;
 
       try {
-          // 1. Enviar Imagem para o ImgBB (Nuvem)
-          let formData = new FormData();
-          formData.append("image", fotoBase64ParaUpload);
+          let urlFotoCurto = "";
 
-          const resImg = await fetch(`https://api.imgbb.com/1/upload?key=${API_KEY_IMGBB}`, {
-              method: "POST",
-              body: formData
-          });
-          const jsonImg = await resImg.json();
-          const urlLinkCurto = jsonImg.data.url;
+          // Se tiver foto nova (Base64), envia pro ImgBB
+          if(fotoBase64Data && fotoBase64Data.startsWith("data:")) {
+              btn.innerText = "ENVIANDO IMAGEM...";
+              const base64Limpo = fotoBase64Data.split(',')[1];
+              let formData = new FormData();
+              formData.append("image", base64Limpo);
+
+              const resImg = await fetch(`https://api.imgbb.com/1/upload?key=${API_KEY_IMGBB}`, {
+                  method: "POST",
+                  body: formData
+              });
+              const jsonImg = await resImg.json();
+              urlFotoCurto = jsonImg.data.url;
+          }
 
           btn.innerText = "SALVANDO DADOS...";
 
-          // 2. Enviar Link Curto e Dados para o Google Sheets
+          // Dados completos (incluindo a ação e ID se houver)
           const dados = {
+            acao: acao,
+            id: ativoId,
             modelo: document.getElementById('nome').value.toUpperCase(),
             patrimonio: document.getElementById('patrimonio').value.toUpperCase(),
             serial: document.getElementById('serial').value.toUpperCase(),
             local: document.getElementById('local').value,
-            foto: urlLinkCurto // Agora enviamos apenas o link pequeno!
+            // Envia a foto apenas se uma nova foi tirada
+            foto: urlFotoCurto 
           };
 
-          await fetch(URL_PLANILHA, {
+          // Envia para o doPost do Script do Google
+          await fetch(URL_SCRIPT_GOOGLE, {
             method: 'POST',
-            mode: 'no-cors',
+            mode: 'no-cors', // Mantido para o Google Sheets
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(dados)
           });
 
-          alert("Ativo cadastrado com sucesso!");
-          location.reload(); // Recarrega para limpar tudo
+          alert(acao === "cadastrar" ? "Ativo cadastrado!" : "Ativo atualizado!");
+          location.reload(); // Limpa e volta ao estado inicial
 
       } catch (err) {
-          alert("Erro ao processar o cadastro. Verifique sua conexão e a chave da API.");
-          btn.innerText = "CADASTRAR ATIVO";
+          alert("Erro no processo. Verifique conexão e chaves.");
+          btn.innerText = ativoId ? "SALVAR ALTERAÇÕES" : "CADASTRAR ATIVO";
           btn.disabled = false;
       }
     });
