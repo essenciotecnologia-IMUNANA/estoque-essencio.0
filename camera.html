@@ -3,165 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ESSENCIO | Engenharia de Ativos</title>
+    <title>ESSENCIO | Pro Camera</title>
     <style>
-        body { margin: 0; padding: 0; background: #000; overflow: hidden; font-family: 'Segoe UI', Arial, sans-serif; }
-        #camera-view { width: 100vw; height: 100vh; object-fit: cover; }
+        body { margin: 0; padding: 0; background: #000; font-family: Arial, sans-serif; overflow: hidden; }
         
-        /* Botão de Captura Profissional */
-        #capture-btn {
-            position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%);
-            width: 80px; height: 80px; background: rgba(255, 255, 255, 0.3);
-            border: 5px solid white; border-radius: 50%; cursor: pointer; z-index: 10;
-            display: flex; justify-content: center; align-items: center;
-            box-shadow: 0 0 20px rgba(0,0,0,0.4);
+        /* Container da Câmera */
+        .camera-container { position: relative; width: 100vw; height: 100vh; }
+        #video-preview { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Camada de Informações em Tempo Real (Overlay) */
+        #overlay-ui {
+            position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%);
+            width: 90%; background: rgba(0,0,0,0.5); border-radius: 15px;
+            padding: 15px; color: white; pointer-events: none;
+            border-left: 5px solid #BA9D58; display: flex; align-items: center;
         }
-        #capture-btn .inner { width: 60px; height: 60px; background: white; border-radius: 50%; }
-        #capture-btn:active .inner { transform: scale(0.9); background: #BA9D58; }
+        .mini-map { width: 80px; height: 80px; border-radius: 8px; margin-right: 15px; border: 1px solid #fff; }
+        .info-text div { font-size: 12px; margin-bottom: 2px; }
+        .info-text .city { font-weight: bold; font-size: 14px; color: #BA9D58; }
 
-        /* Efeito de Flash */
-        #flash { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: white; opacity: 0; pointer-events: none; z-index: 20; }
-        .flashing { animation: fAnim 0.4s ease-out; }
-        @keyframes fAnim { 0% { opacity: 1; } 100% { opacity: 0; } }
-
-        /* Toast de Sucesso */
-        #toast {
-            position: fixed; top: 30px; left: 50%; transform: translateX(-50%);
-            background: #BA9D58; color: #000; font-weight: bold; padding: 12px 25px;
-            border-radius: 30px; font-size: 14px; opacity: 0; transition: 0.3s; z-index: 30;
+        /* Controles */
+        .controls {
+            position: absolute; bottom: 30px; width: 100%;
+            display: flex; justify-content: space-evenly; align-items: center;
         }
+        .btn-icon { width: 50px; height: 50px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; cursor: pointer; border: 1px solid white; }
+        
+        #shutter-btn {
+            width: 70px; height: 70px; background: white; border-radius: 50%;
+            border: 5px solid rgba(255,255,255,0.3); cursor: pointer;
+        }
+        .recording { background: red !important; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        #flash-status { position: absolute; top: 20px; right: 20px; color: yellow; font-size: 24px; }
     </style>
 </head>
 <body>
 
-    <video id="camera-view" autoplay playsinline></video>
-    <div id="capture-btn"><div class="inner"></div></div>
-    <div id="flash"></div>
-    <div id="toast">FOTO SALVA COM SUCESSO!</div>
-    <canvas id="photo-canvas" style="display: none;"></canvas>
+<div class="camera-container">
+    <video id="video-preview" autoplay playsinline></video>
+    <div id="flash-status">⚡ Off</div>
 
-    <script>
-        const video = document.getElementById('camera-view');
-        const canvas = document.getElementById('photo-canvas');
-        const btn = document.getElementById('capture-btn');
-        const flash = document.getElementById('flash');
-        const toast = document.getElementById('toast');
+    <div id="overlay-ui">
+        <img id="ui-map" class="mini-map" src="" alt="Mapa">
+        <div class="info-text">
+            <div id="ui-city" class="city">LOCALIZANDO...</div>
+            <div id="ui-addr">Buscando endereço...</div>
+            <div id="ui-coords">LAT: 0.000000 | LON: 0.000000</div>
+            <div id="ui-date">--/--/---- --:--:--</div>
+        </div>
+    </div>
 
-        let geoData = {
-            lat: "0.000000", lon: "0.000000", 
-            cityState: "Localizando...", 
-            fullAddress: "Buscando endereço...", 
-            dateTime: ""
-        };
+    <div class="controls">
+        <div class="btn-icon" onclick="toggleFlash()">FLASH</div>
+        <div id="shutter-btn" onclick="handleCapture()"></div>
+        <div class="btn-icon" id="mode-btn" onclick="toggleMode()">FOTO</div>
+    </div>
+</div>
 
-        let mapImage = new Image();
-        mapImage.crossOrigin = "Anonymous";
+<canvas id="hidden-canvas" style="display:none;"></canvas>
 
-        // 1. Ligar Câmera Traseira em Alta Definição
-        const constraints = { 
-            video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } 
-        };
-        navigator.mediaDevices.getUserMedia(constraints).then(s => video.srcObject = s);
+<script>
+    const video = document.getElementById('video-preview');
+    const shutter = document.getElementById('shutter-btn');
+    const modeBtn = document.getElementById('mode-btn');
+    let isVideoMode = false;
+    let isRecording = false;
+    let mediaRecorder;
+    let recordedChunks = [];
+    let flashOn = false;
 
-        // 2. Motor de GPS de Alta Precisão (Forçado)
-        function updateLoc(pos) {
-            const lat = pos.coords.latitude;
-            const lon = pos.coords.longitude;
-            geoData.lat = lat.toFixed(6);
-            geoData.lon = lon.toFixed(6);
+    let geoData = { lat: 0, lon: 0, city: "", addr: "", map: "" };
 
-            // Buscar Mini Mapa Real
-            const z = 15;
-            const x = Math.floor((lon + 180) / 360 * Math.pow(2, z));
-            const y = Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, z));
-            mapImage.src = `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
-
-            // Buscar Endereço via API (Nominatim)
-            fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
-                .then(r => r.json())
-                .then(d => {
-                    const a = d.address;
-                    const city = a.city || a.town || a.village || "Rio de Janeiro";
-                    const state = a.state || "RJ";
-                    geoData.cityState = `${city}, ${state}, Brasil 🇧🇷`;
-                    geoData.fullAddress = `${a.road || 'Logradouro não identificado'}, ${a.suburb || ''}`;
-                });
-        }
-
-        navigator.geolocation.watchPosition(updateLoc, (e) => console.log(e), {
-            enableHighAccuracy: true, timeout: 15000, maximumAge: 0
+    // Iniciar Câmera
+    async function startCam() {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: "environment", width: { ideal: 1280 } },
+            audio: true 
         });
+        video.srcObject = stream;
+    }
 
-        // 3. Captura e Processamento do Selo Profissional
-        btn.onclick = () => {
-            flash.classList.add('flashing');
-            setTimeout(() => flash.classList.remove('flashing'), 400);
+    // Toggle Flash (Se suportado pelo navegador/hardware)
+    async function toggleFlash() {
+        const track = video.srcObject.getVideoTracks()[0];
+        flashOn = !flashOn;
+        try {
+            await track.applyConstraints({ advanced: [{ torch: flashOn }] });
+            document.getElementById('flash-status').innerText = flashOn ? "⚡ On" : "⚡ Off";
+        } catch(e) { alert("Flash não suportado neste navegador."); }
+    }
 
-            const ctx = canvas.getContext('2d');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            ctx.drawImage(video, 0, 0);
+    function toggleMode() {
+        isVideoMode = !isVideoMode;
+        modeBtn.innerText = isVideoMode ? "VÍDEO" : "FOTO";
+        shutter.style.borderRadius = isVideoMode ? "10px" : "50%";
+    }
 
-            // Ajustes de Proporção (Selo inteligente)
-            const s = canvas.width / 1080; 
-            const h = 200 * s;
-            const m = 30 * s;
-            const y = canvas.height - h - m;
+    // Atualizar UI em Tempo Real
+    navigator.geolocation.watchPosition(p => {
+        geoData.lat = p.coords.latitude.toFixed(6);
+        geoData.lon = p.coords.longitude.toFixed(6);
+        
+        const z=15; 
+        const x=Math.floor((p.coords.longitude+180)/360*Math.pow(2,z));
+        const y=Math.floor((1-Math.log(Math.tan(p.coords.latitude*Math.PI/180)+1/Math.cos(p.coords.latitude*Math.PI/180))/Math.PI)/2*Math.pow(2,z));
+        
+        geoData.map = `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
+        document.getElementById('ui-map').src = geoData.map;
+        document.getElementById('ui-coords').innerText = `LAT: ${geoData.lat} | LON: ${geoData.lon}`;
 
-            // Fundo do Selo (Translúcido)
-            ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-            ctx.beginPath();
-            ctx.roundRect(m, y, canvas.width - (m * 2), h, 15 * s);
-            ctx.fill();
+        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${geoData.lat}&lon=${geoData.lon}&format=json`)
+            .then(r => r.json()).then(d => {
+                geoData.city = (d.address.city || d.address.town || "Rio").toUpperCase();
+                geoData.addr = d.address.road || "Logradouro não identificado";
+                document.getElementById('ui-city').innerText = geoData.city;
+                document.getElementById('ui-addr').innerText = geoData.addr;
+            });
+    }, null, { enableHighAccuracy: true });
 
-            // Mapa Quadrado
-            const mSize = 160 * s;
-            const mX = m + (20 * s);
-            const mY = y + (20 * s);
-            ctx.save();
-            ctx.beginPath();
-            ctx.roundRect(mX, mY, mSize, mSize, 10 * s);
-            ctx.clip();
-            if(mapImage.complete) ctx.drawImage(mapImage, mX, mY, mSize, mSize);
-            ctx.restore();
+    setInterval(() => {
+        document.getElementById('ui-date').innerText = new Date().toLocaleString() + " GMT -03:00";
+    }, 1000);
 
-            // Pino no Mapa
-            ctx.fillStyle = "#ff0000";
-            ctx.beginPath(); ctx.arc(mX + mSize/2, mY + mSize/2 - 5*s, 7*s, 0, Math.PI*2); ctx.fill();
+    // Captura de Foto ou Vídeo
+    function handleCapture() {
+        if (!isVideoMode) {
+            takePhoto();
+        } else {
+            if (!isRecording) startRecording();
+            else stopRecording();
+        }
+    }
 
-            // Informações de Texto
-            const tx = mX + mSize + (25 * s);
-            ctx.fillStyle = "white";
-            ctx.textAlign = "left";
+    function takePhoto() {
+        const canvas = document.getElementById('hidden-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        // Desenha o vídeo
+        ctx.drawImage(video, 0, 0);
+        
+        // Desenha o selo (Overlay) na foto final igual ao que está na tela
+        const s = canvas.width / 1000;
+        ctx.fillStyle = "rgba(0,0,0,0.7)";
+        ctx.fillRect(50*s, canvas.height - 250*s, canvas.width - 100*s, 200*s);
+        
+        ctx.fillStyle = "#BA9D58";
+        ctx.font = `bold ${35*s}px Arial`;
+        ctx.fillText(geoData.city, 80*s, canvas.height - 180*s);
+        
+        ctx.fillStyle = "white";
+        ctx.font = `${25*s}px Arial`;
+        ctx.fillText(geoData.addr, 80*s, canvas.height - 140*s);
+        ctx.fillText(`LAT: ${geoData.lat} LON: ${geoData.lon}`, 80*s, canvas.height - 100*s);
+        ctx.fillText(document.getElementById('ui-date').innerText, 80*s, canvas.height - 60*s);
 
-            // Título Cidade/Estado
-            ctx.font = `bold ${30 * s}px Arial`;
-            ctx.fillText(geoData.cityState.toUpperCase(), tx, y + 50 * s);
+        const link = document.createElement('a');
+        link.download = 'ESSENCIO_FOTO.jpg';
+        link.href = canvas.toDataURL('image/jpeg');
+        link.click();
+    }
 
-            // Endereço e Coordenadas
-            ctx.font = `${20 * s}px Arial`;
-            ctx.fillStyle = "rgba(255,255,255,0.9)";
-            ctx.fillText(geoData.fullAddress, tx, y + 90 * s);
-            
-            ctx.fillStyle = "#BA9D58"; // Cor ESSENCIO
-            ctx.font = `bold ${22 * s}px Arial`;
-            ctx.fillText(`LAT: ${geoData.lat}°  LONG: ${geoData.lon}°`, tx, y + 130 * s);
-
-            // Data e Hora
-            ctx.fillStyle = "rgba(255,255,255,0.6)";
-            ctx.font = `${18 * s}px Arial`;
-            const now = new Date();
-            ctx.fillText(now.toLocaleString('pt-BR') + " GMT -03:00", tx, y + 170 * s);
-
-            // 4. Salvar Automático
-            const link = document.createElement('a');
-            link.download = `ESSENCIO_REGISTRO_${Date.now()}.jpg`;
-            link.href = canvas.toDataURL('image/jpeg', 0.95);
-            link.click();
-
-            toast.style.opacity = '1';
-            setTimeout(() => toast.style.opacity = '0', 2500);
+    function startRecording() {
+        recordedChunks = [];
+        mediaRecorder = new MediaRecorder(video.srcObject);
+        mediaRecorder.ondataavailable = e => recordedChunks.push(e.data);
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(recordedChunks, { type: "video/mp4" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url; a.download = "ESSENCIO_VIDEO.mp4"; a.click();
         };
-    </script>
+        mediaRecorder.start();
+        isRecording = true;
+        shutter.classList.add('recording');
+    }
+
+    function stopRecording() {
+        mediaRecorder.stop();
+        isRecording = false;
+        shutter.classList.remove('recording');
+    }
+
+    startCam();
+</script>
 </body>
 </html>
