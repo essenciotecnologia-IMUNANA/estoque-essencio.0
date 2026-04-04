@@ -12,6 +12,9 @@
         .logo-container { filter: drop-shadow(0 0 15px rgba(186, 157, 88, 0.3)); }
         .input-style { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); color: white; transition: all 0.3s; }
         .input-style:focus { border-color: var(--dourado); outline: none; background: rgba(255,255,255,0.06); }
+        
+        /* Estilo para o Preview da Foto */
+        #fotoPreviewImage { width: 100%; height: 100%; object-fit: cover; border-radius: 16px; }
     </style>
 </head>
 <body class="pb-20">
@@ -29,19 +32,23 @@
   <main class="max-w-md mx-auto px-4">
     <div class="bg-white/5 p-6 rounded-[35px] border border-white/10 mb-8 shadow-2xl backdrop-blur-sm">
       <form id="formEstoque" class="space-y-4">
-        <div class="relative group h-14">
-          <input type="file" id="fotoInput" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30">
-          <div id="fotoPreviewContainer" class="w-full h-full rounded-2xl input-style flex items-center justify-center gap-4 group-hover:border-[#BA9D58]">
-            <img id="fotoPreviewImage" src="#" class="w-10 h-10 rounded-lg object-cover hidden border border-white/20">
-            <span id="fotoPreviewText" class="text-[10px] text-white/40 font-black uppercase tracking-widest italic">📷 Foto do Equipamento</span>
+        
+        <div class="relative group h-40 mb-6">
+          <input type="file" id="fotoInput" accept="image/*" capture="environment" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30">
+          <div id="fotoPreviewContainer" class="w-full h-full rounded-2xl input-style flex flex-col items-center justify-center gap-2 group-hover:border-[#BA9D58] overflow-hidden">
+            <img id="fotoPreviewImage" src="#" class="hidden border border-white/20">
+            <div id="fotoPlaceholder" class="flex flex-col items-center">
+                <span class="text-3xl mb-2">📷</span>
+                <span class="text-[10px] text-white/40 font-black uppercase tracking-widest italic text-center px-4">Toque para tirar foto do equipamento</span>
+            </div>
           </div>
         </div>
 
         <input type="text" id="nome" placeholder="MODELO DO EQUIPAMENTO" required class="w-full h-14 px-5 rounded-2xl input-style font-bold uppercase text-sm">
         
         <div class="grid grid-cols-2 gap-3">
-            <input type="text" id="patrimonio" placeholder="PATRIMÔNIO" required class="w-full h-14 px-5 rounded-2xl input-style font-mono text-sm">
-            <input type="text" id="serial" placeholder="SÉRIE" required class="w-full h-14 px-5 rounded-2xl input-style font-mono text-sm">
+            <input type="text" id="patrimonio" placeholder="PATRIMÔNIO" required class="w-full h-14 px-5 rounded-2xl input-style font-mono text-sm uppercase">
+            <input type="text" id="serial" placeholder="SÉRIE" required class="w-full h-14 px-5 rounded-2xl input-style font-mono text-sm uppercase">
         </div>
 
         <select id="local" required class="w-full h-14 px-5 rounded-2xl input-style font-bold text-xs uppercase appearance-none cursor-pointer">
@@ -55,7 +62,7 @@
             <option value="Ponto P7" class="bg-[#0d120e]">Ponto P7</option>
         </select>
 
-        <button type="submit" id="btnEnviar" class="w-full h-15 bg-[#BA9D58] text-black font-black rounded-2xl uppercase tracking-widest text-sm active:scale-95 transition-all shadow-[0_10px_20px_rgba(186,157,88,0.2)]">
+        <button type="submit" id="btnEnviar" class="w-full h-16 bg-[#BA9D58] text-black font-black rounded-2xl uppercase tracking-widest text-sm active:scale-95 transition-all shadow-[0_10px_20px_rgba(186,157,88,0.2)]">
           CADASTRAR ATIVO
         </button>
       </form>
@@ -63,56 +70,78 @@
   </main>
 
   <script>
-    let fotoBase64Data = "";
+    let fotoBase64ParaUpload = "";
 
-    // 🔗 !!! ATENÇÃO !!! COLE O LINK DO GOOGLE ABAIXO ENTRE AS ASPAS:
+    // 🔑 CONFIGURAÇÕES
     const URL_PLANILHA = "https://script.google.com/macros/s/AKfycbw_eawx8FWuhPag8mm5rdE1DA4fp-XkfKwQxs_Ew7yu5uYh9Yq91W3JhBYc-oaD6PCj6Q/exec";
+    const API_KEY_IMGBB = "b7eb71f8a559e9aa72a9d83ea40f712e"; 
 
+    // Capturar Foto e Mostrar Preview
     document.getElementById('fotoInput').addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) {
         const reader = new FileReader();
         reader.onload = (event) => {
-          fotoBase64Data = event.target.result;
-          document.getElementById('fotoPreviewImage').src = fotoBase64Data;
+          const base64completo = event.target.result;
+          fotoBase64ParaUpload = base64completo.split(',')[1]; // Tira o cabeçalho para a API
+          
+          document.getElementById('fotoPreviewImage').src = base64completo;
           document.getElementById('fotoPreviewImage').classList.remove('hidden');
-          document.getElementById('fotoPreviewText').classList.add('hidden');
+          document.getElementById('fotoPlaceholder').classList.add('hidden');
         };
         reader.readAsDataURL(file);
       }
     });
 
-    document.getElementById('formEstoque').addEventListener('submit', (e) => {
+    document.getElementById('formEstoque').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = document.getElementById('btnEnviar');
-      btn.innerText = "ENVIANDO...";
+      
+      if(!fotoBase64ParaUpload) {
+          alert("Por favor, tire a foto do equipamento primeiro.");
+          return;
+      }
+
+      btn.innerText = "ENVIANDO IMAGEM...";
       btn.disabled = true;
 
-      const dados = {
-        modelo: document.getElementById('nome').value.toUpperCase(),
-        patrimonio: document.getElementById('patrimonio').value,
-        serial: document.getElementById('serial').value,
-        local: document.getElementById('local').value,
-        foto: fotoBase64Data
-      };
+      try {
+          // 1. Enviar Imagem para o ImgBB (Nuvem)
+          let formData = new FormData();
+          formData.append("image", fotoBase64ParaUpload);
 
-      fetch(URL_PLANILHA, {
-        method: 'POST',
-        mode: 'no-cors',
-        body: JSON.stringify(dados)
-      })
-      .then(() => {
-        alert("Ativo cadastrado com sucesso!");
-        e.target.reset();
-        fotoBase64Data = "";
-        document.getElementById('fotoPreviewImage').classList.add('hidden');
-        document.getElementById('fotoPreviewText').classList.remove('hidden');
-      })
-      .catch(() => alert("Erro na conexão."))
-      .finally(() => {
-        btn.innerText = "CADASTRAR ATIVO";
-        btn.disabled = false;
-      });
+          const resImg = await fetch(`https://api.imgbb.com/1/upload?key=${API_KEY_IMGBB}`, {
+              method: "POST",
+              body: formData
+          });
+          const jsonImg = await resImg.json();
+          const urlLinkCurto = jsonImg.data.url;
+
+          btn.innerText = "SALVANDO DADOS...";
+
+          // 2. Enviar Link Curto e Dados para o Google Sheets
+          const dados = {
+            modelo: document.getElementById('nome').value.toUpperCase(),
+            patrimonio: document.getElementById('patrimonio').value.toUpperCase(),
+            serial: document.getElementById('serial').value.toUpperCase(),
+            local: document.getElementById('local').value,
+            foto: urlLinkCurto // Agora enviamos apenas o link pequeno!
+          };
+
+          await fetch(URL_PLANILHA, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(dados)
+          });
+
+          alert("Ativo cadastrado com sucesso!");
+          location.reload(); // Recarrega para limpar tudo
+
+      } catch (err) {
+          alert("Erro ao processar o cadastro. Verifique sua conexão e a chave da API.");
+          btn.innerText = "CADASTRAR ATIVO";
+          btn.disabled = false;
+      }
     });
   </script>
 </body>
