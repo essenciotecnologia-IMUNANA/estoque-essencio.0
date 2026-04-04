@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ESSENCIO | Engenharia de Ativos</title>
+    <style>
+        body { margin: 0; padding: 0; background: #000; overflow: hidden; font-family: 'Segoe UI', Arial, sans-serif; }
+        #camera-view { width: 100vw; height: 100vh; object-fit: cover; }
+        
+        /* Botão de Captura Profissional */
+        #capture-btn {
+            position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%);
+            width: 80px; height: 80px; background: rgba(255, 255, 255, 0.3);
+            border: 5px solid white; border-radius: 50%; cursor: pointer; z-index: 10;
+            display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 0 20px rgba(0,0,0,0.4);
+        }
+        #capture-btn .inner { width: 60px; height: 60px; background: white; border-radius: 50%; }
+        #capture-btn:active .inner { transform: scale(0.9); background: #BA9D58; }
+
+        /* Efeito de Flash */
+        #flash { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: white; opacity: 0; pointer-events: none; z-index: 20; }
+        .flashing { animation: fAnim 0.4s ease-out; }
+        @keyframes fAnim { 0% { opacity: 1; } 100% { opacity: 0; } }
+
+        /* Toast de Sucesso */
+        #toast {
+            position: fixed; top: 30px; left: 50%; transform: translateX(-50%);
+            background: #BA9D58; color: #000; font-weight: bold; padding: 12px 25px;
+            border-radius: 30px; font-size: 14px; opacity: 0; transition: 0.3s; z-index: 30;
+        }
+    </style>
+</head>
+<body>
+
+    <video id="camera-view" autoplay playsinline></video>
+    <div id="capture-btn"><div class="inner"></div></div>
+    <div id="flash"></div>
+    <div id="toast">FOTO SALVA COM SUCESSO!</div>
+    <canvas id="photo-canvas" style="display: none;"></canvas>
+
+    <script>
+        const video = document.getElementById('camera-view');
+        const canvas = document.getElementById('photo-canvas');
+        const btn = document.getElementById('capture-btn');
+        const flash = document.getElementById('flash');
+        const toast = document.getElementById('toast');
+
+        let geoData = {
+            lat: "0.000000", lon: "0.000000", 
+            cityState: "Localizando...", 
+            fullAddress: "Buscando endereço...", 
+            dateTime: ""
+        };
+
+        let mapImage = new Image();
+        mapImage.crossOrigin = "Anonymous";
+
+        // 1. Ligar Câmera Traseira em Alta Definição
+        const constraints = { 
+            video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } 
+        };
+        navigator.mediaDevices.getUserMedia(constraints).then(s => video.srcObject = s);
+
+        // 2. Motor de GPS de Alta Precisão (Forçado)
+        function updateLoc(pos) {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            geoData.lat = lat.toFixed(6);
+            geoData.lon = lon.toFixed(6);
+
+            // Buscar Mini Mapa Real
+            const z = 15;
+            const x = Math.floor((lon + 180) / 360 * Math.pow(2, z));
+            const y = Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, z));
+            mapImage.src = `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
+
+            // Buscar Endereço via API (Nominatim)
+            fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
+                .then(r => r.json())
+                .then(d => {
+                    const a = d.address;
+                    const city = a.city || a.town || a.village || "Rio de Janeiro";
+                    const state = a.state || "RJ";
+                    geoData.cityState = `${city}, ${state}, Brasil 🇧🇷`;
+                    geoData.fullAddress = `${a.road || 'Logradouro não identificado'}, ${a.suburb || ''}`;
+                });
+        }
+
+        navigator.geolocation.watchPosition(updateLoc, (e) => console.log(e), {
+            enableHighAccuracy: true, timeout: 15000, maximumAge: 0
+        });
+
+        // 3. Captura e Processamento do Selo Profissional
+        btn.onclick = () => {
+            flash.classList.add('flashing');
+            setTimeout(() => flash.classList.remove('flashing'), 400);
+
+            const ctx = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0);
+
+            // Ajustes de Proporção (Selo inteligente)
+            const s = canvas.width / 1080; 
+            const h = 200 * s;
+            const m = 30 * s;
+            const y = canvas.height - h - m;
+
+            // Fundo do Selo (Translúcido)
+            ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+            ctx.beginPath();
+            ctx.roundRect(m, y, canvas.width - (m * 2), h, 15 * s);
+            ctx.fill();
+
+            // Mapa Quadrado
+            const mSize = 160 * s;
+            const mX = m + (20 * s);
+            const mY = y + (20 * s);
+            ctx.save();
+            ctx.beginPath();
+            ctx.roundRect(mX, mY, mSize, mSize, 10 * s);
+            ctx.clip();
+            if(mapImage.complete) ctx.drawImage(mapImage, mX, mY, mSize, mSize);
+            ctx.restore();
+
+            // Pino no Mapa
+            ctx.fillStyle = "#ff0000";
+            ctx.beginPath(); ctx.arc(mX + mSize/2, mY + mSize/2 - 5*s, 7*s, 0, Math.PI*2); ctx.fill();
+
+            // Informações de Texto
+            const tx = mX + mSize + (25 * s);
+            ctx.fillStyle = "white";
+            ctx.textAlign = "left";
+
+            // Título Cidade/Estado
+            ctx.font = `bold ${30 * s}px Arial`;
+            ctx.fillText(geoData.cityState.toUpperCase(), tx, y + 50 * s);
+
+            // Endereço e Coordenadas
+            ctx.font = `${20 * s}px Arial`;
+            ctx.fillStyle = "rgba(255,255,255,0.9)";
+            ctx.fillText(geoData.fullAddress, tx, y + 90 * s);
+            
+            ctx.fillStyle = "#BA9D58"; // Cor ESSENCIO
+            ctx.font = `bold ${22 * s}px Arial`;
+            ctx.fillText(`LAT: ${geoData.lat}°  LONG: ${geoData.lon}°`, tx, y + 130 * s);
+
+            // Data e Hora
+            ctx.fillStyle = "rgba(255,255,255,0.6)";
+            ctx.font = `${18 * s}px Arial`;
+            const now = new Date();
+            ctx.fillText(now.toLocaleString('pt-BR') + " GMT -03:00", tx, y + 170 * s);
+
+            // 4. Salvar Automático
+            const link = document.createElement('a');
+            link.download = `ESSENCIO_REGISTRO_${Date.now()}.jpg`;
+            link.href = canvas.toDataURL('image/jpeg', 0.95);
+            link.click();
+
+            toast.style.opacity = '1';
+            setTimeout(() => toast.style.opacity = '0', 2500);
+        };
+    </script>
+</body>
+</html>
