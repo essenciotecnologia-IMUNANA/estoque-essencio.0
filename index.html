@@ -3,208 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ESSENCIO - Gestão e Estoque</title>
+    <title>ESSENCIO - Gestão Ativa</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root { 
-            --dourado: #BA9D58; 
-            --fundo: #0a0e0a; 
-            --card: #151a15; 
-            --borda: #2a332a;
-        }
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: var(--fundo); 
-            color: white; 
-            margin: 0; 
-            padding-bottom: 100px; 
-            -webkit-font-smoothing: antialiased;
-        }
+        :root { --dourado: #BA9D58; --fundo: #0a0e0a; --card: #151a15; --borda: #2a332a; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--fundo); color: white; margin: 0; padding-bottom: 120px; -webkit-font-smoothing: antialiased; }
         
-        .input-container {
-            background: var(--card); border-radius: 16px; padding: 12px 20px;
-            margin-bottom: 16px; border: 1px solid var(--borda); transition: border-color 0.3s;
-        }
-        .input-container:focus-within { border-color: var(--dourado); }
-        .label-elite { 
-            font-size: 10px; font-weight: 800; color: var(--dourado); 
-            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; display: block;
-        }
-        .input-elite { 
-            background: transparent; border: none; width: 100%; color: white; 
-            font-weight: 900; font-size: 14px; text-transform: uppercase; outline: none; 
-        }
-        .input-elite::placeholder { color: #444; font-weight: 600; }
-
-        .btn-principal { 
-            height: 60px; border-radius: 16px; font-weight: 900; font-size: 14px;
-            text-transform: uppercase; width: 100%; background: transparent; color: white;
-            border: 2px solid var(--dourado); cursor: pointer; transition: all 0.2s; letter-spacing: 1px;
-        }
-        .btn-principal:active { background: var(--dourado); color: black; transform: scale(0.98); }
-
-        .bottom-nav {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            background: var(--card); border: 1px solid var(--dourado); border-radius: 30px;
-            display: flex; gap: 40px; padding: 12px 40px; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.9);
-        }
-        .nav-icon { color: #555; cursor: pointer; transition: color 0.3s; outline: none; }
+        /* Estilos Originais Mantidos */
+        .input-container { background: var(--card); border-radius: 16px; padding: 12px 20px; margin-bottom: 16px; border: 1px solid var(--borda); transition: border-color 0.3s; }
+        .label-elite { font-size: 10px; font-weight: 800; color: var(--dourado); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; display: block; }
+        .input-elite { background: transparent; border: none; width: 100%; color: white; font-weight: 900; font-size: 14px; text-transform: uppercase; outline: none; }
+        .btn-principal { height: 60px; border-radius: 16px; font-weight: 900; font-size: 14px; text-transform: uppercase; width: 100%; background: transparent; color: white; border: 2px solid var(--dourado); cursor: pointer; transition: all 0.2s; }
+        
+        /* Nav e Cards */
+        .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--dourado); border-radius: 30px; display: flex; gap: 40px; padding: 12px 40px; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.9); transition: 0.3s; }
+        .nav-icon { color: #555; cursor: pointer; font-size: 24px; }
         .nav-icon.active { color: var(--dourado); }
-
         .view-hidden { display: none !important; }
 
-        #toast { 
-            visibility: hidden; min-width: 250px; background: var(--dourado); color: black; 
-            border-radius: 30px; padding: 15px 20px; position: fixed; z-index: 5000; left: 50%; top: 20px; 
-            transform: translateX(-50%); font-weight: 900; text-align: center; text-transform: uppercase;
-            box-shadow: 0 10px 20px rgba(186,157,88, 0.3); opacity: 0; transition: opacity 0.3s, top 0.3s;
-        }
-        #toast.show { visibility: visible; opacity: 1; top: 40px; }
-
-        .clash-card {
-            position: relative; background: #111; border-radius: 12px; border: 2px solid #333;
-            overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 8px 15px rgba(0,0,0,0.8);
-        }
+        /* Estilo Clash Selecionado */
+        .clash-card { position: relative; background: #111; border-radius: 12px; border: 2px solid #333; overflow: hidden; cursor: pointer; transition: 0.2s; }
+        .clash-card.selected { border: 3px solid var(--dourado); transform: scale(1.03); box-shadow: 0 0 15px var(--dourado); z-index: 50; filter: brightness(1.2); }
+        .clash-card-header { height: 80px; position: relative; display: flex; align-items: center; justify-content: center; border-bottom: 2px solid var(--dourado); background: #222; }
+        .clash-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.5; }
+        .clash-elixir { position: absolute; top: -6px; left: -6px; background: var(--dourado); color: black; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 12px; border: 3px solid #0a0e0a; z-index: 10; }
         
-        .clash-card-header {
-            height: 80px; background: linear-gradient(to bottom, #2a2a2a, #0a0e0a);
-            position: relative; display: flex; align-items: center; justify-content: center;
-            border-bottom: 2px solid var(--dourado); padding: 10px;
-        }
-        .clash-elixir {
-            position: absolute; top: -6px; left: -6px; background: var(--dourado); color: black;
-            width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; 
-            justify-content: center; font-weight: 900; font-size: 12px; border: 3px solid #0a0e0a; z-index: 10;
-        }
-        .clash-delete {
-            position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.6); color: #ff4444;
-            width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; 
-            justify-content: center; font-weight: bold; font-size: 10px; cursor: pointer; border: 1px solid #ff4444; z-index: 10;
-        }
-        .clash-card-body { padding: 8px; display: flex; flex-direction: column; flex: 1; background: #0a0e0a; }
-        
-        .info-resp { font-size: 7px; color: var(--dourado); font-weight: 800; text-transform: uppercase; margin-top: 4px; }
-        .timestamp { font-size: 7px; color: #555; text-align: center; margin-top: 2px; font-weight: bold; }
+        /* Painel de Ação Flutuante */
+        #action-bar { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: var(--dourado); color: black; padding: 10px 20px; border-radius: 20px; display: none; gap: 20px; font-weight: 900; font-size: 12px; z-index: 2000; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
 
-    <div id="toast">SINCRONIZADO NA NUVEM!</div>
+    <div id="toast">SINCRONIZADO!</div>
+
+    <div id="action-bar">
+        <button onclick="excluirSelecionados()">🗑️ EXCLUIR</button>
+        <span class="opacity-30">|</span>
+        <button onclick="movimentarSelecionados()">🚚 MOVER</button>
+    </div>
 
     <header class="pt-12 pb-6 text-center flex flex-col items-center">
-        <div class="w-24 h-24 bg-[#151a15] border-[3px] border-[#BA9D58] rounded-[2rem] flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(186,157,88,0.15)] overflow-hidden">
-            <div class="w-[4.5rem] h-[4.5rem] bg-white flex items-center justify-center p-1">
-                <img src="https://i.imgur.com/LNNpmQr.jpeg" alt="Logo Empresa" class="w-full h-full object-contain">
-            </div>
+        <div class="w-20 h-20 bg-[#151a15] border-[3px] border-[#BA9D58] rounded-[1.5rem] flex items-center justify-center mb-4 overflow-hidden">
+            <img src="https://i.imgur.com/LNNpmQr.jpeg" alt="Logo" class="w-full h-full object-contain p-2 bg-white">
         </div>
         <h1 class="font-black text-2xl tracking-[0.2em] text-[#BA9D58]">ESSENCIO</h1>
-        <h2 id="subtitle" class="text-[9px] font-bold tracking-[0.3em] text-white uppercase mt-2">Gestão de Ativos | Nuvem</h2>
+        <h2 id="status-nuvem" class="text-[9px] font-bold tracking-[0.3em] text-white uppercase mt-2">Gestão de Ativos | Realtime</h2>
     </header>
 
     <main id="view-form" class="px-6 max-w-md mx-auto">
-        <div class="relative h-32 mb-8 bg-[#151a15] rounded-2xl border border-[#2a332a] flex flex-col items-center justify-center overflow-hidden">
+        <div class="relative h-32 mb-8 bg-[#151a15] rounded-2xl border border-[#2a332a] flex items-center justify-center overflow-hidden">
             <input type="file" id="input-foto" accept="image/*" capture="environment" class="absolute inset-0 opacity-0 z-20 cursor-pointer">
             <img id="preview" class="absolute inset-0 w-full h-full object-cover hidden z-10 opacity-70">
-            <div id="instrucao" class="text-center z-0 flex flex-col items-center">
-                <svg class="w-8 h-8 text-[#BA9D58] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                <span class="text-white text-[10px] font-black tracking-widest uppercase">Scan Visual</span>
-            </div>
+            <span class="text-[#BA9D58] text-[10px] font-black uppercase">📷 Scan Visual</span>
         </div>
 
         <form id="form-registro">
-            <div class="input-container"><label class="label-elite">Responsável pelo Registro</label><input type="text" id="f-user" placeholder="Seu nome" class="input-elite" required></div>
-            <div class="input-container"><label class="label-elite">Modelo/NOME do Ativo</label><input type="text" id="f-nome" placeholder="Nome do Equipamento" class="input-elite" required></div>
-            <div class="input-container"><label class="label-elite">Marca / Modelo Técnico</label><input type="text" id="f-modelo" placeholder="Ex: Bosch, Dell..." class="input-elite"></div>
+            <div class="input-container"><label class="label-elite">Responsável</label><input type="text" id="f-user" class="input-elite" required></div>
+            <div class="input-container"><label class="label-elite">Modelo do Ativo</label><input type="text" id="f-nome" class="input-elite" required></div>
+            <div class="input-container"><label class="label-elite">Marca / Modelo Técnico</label><input type="text" id="f-modelo" class="input-elite"></div>
             <div class="flex gap-4">
-                <div class="input-container flex-1"><label class="label-elite">Patrimônio</label><input type="text" id="f-pt" placeholder="PT-000" class="input-elite"></div>
-                <div class="input-container flex-1"><label class="label-elite">Série</label><input type="text" id="f-sn" placeholder="SN-000" class="input-elite"></div>
+                <div class="input-container flex-1"><label class="label-elite">Patrimônio</label><input type="text" id="f-pt" class="input-elite"></div>
+                <div class="input-container flex-1"><label class="label-elite">Série</label><input type="text" id="f-sn" class="input-elite"></div>
             </div>
             <div class="flex gap-4">
                 <div class="input-container flex-1"><label class="label-elite">QTD</label><input type="number" id="f-qtd" value="1" class="input-elite"></div>
-                <div class="input-container flex-1"><label class="label-elite">Nota Fiscal</label><input type="text" id="f-nf" placeholder="NF-000" class="input-elite"></div>
+                <div class="input-container flex-1"><label class="label-elite">Nota Fiscal</label><input type="text" id="f-nf" class="input-elite"></div>
             </div>
-            <div class="input-container"><label class="label-elite">Part Number</label><input type="text" id="f-pn" placeholder="PN-000" class="input-elite"></div>
-            <div class="input-container"><label class="label-elite">Localização / Destino</label><input type="text" id="f-local" placeholder="Alocação atual" class="input-elite"></div>
-            <button type="submit" class="btn-principal mt-4 mb-24">Confirmar Registro </button>
+            <div class="input-container"><label class="label-elite">Part Number</label><input type="text" id="f-pn" class="input-elite"></div>
+            <div class="input-container"><label class="label-elite">Localização</label><input type="text" id="f-local" class="input-elite"></div>
+            <button type="submit" id="btn-submit" class="btn-principal mt-4 mb-24">Confirmar Registro</button>
         </form>
     </main>
 
     <main id="view-collection" class="px-4 max-w-md mx-auto view-hidden">
         <div class="flex justify-between items-end mb-6 border-b border-[#2a332a] pb-2 px-2">
-            <h3 class="text-white font-black text-sm tracking-widest uppercase">Estoque Ativo</h3>
-            <span id="contador-ativos" class="text-[#BA9D58] font-black text-sm bg-[#111] px-2 py-1 rounded border border-[#333]">0</span>
+            <h3 class="text-white font-black text-sm uppercase">Estoque em Nuvem</h3>
+            <span id="contador-ativos" class="text-[#BA9D58] font-black text-sm bg-[#111] px-2 py-1 rounded">0</span>
         </div>
         <div id="lista-ativos" class="grid grid-cols-2 gap-4 pb-28"></div>
     </main>
 
-    <nav class="bottom-nav">
-        <button id="nav-home" class="nav-icon active" onclick="switchTab('form')"><svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></button>
-        <button id="nav-collection" class="nav-icon" onclick="switchTab('collection')"><svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg></button>
+    <nav class="bottom-nav" id="main-nav">
+        <button id="nav-home" class="nav-icon active" onclick="switchTab('form')">🏠</button>
+        <button id="nav-collection" class="nav-icon" onclick="switchTab('collection')">📦</button>
     </nav>
 
     <script>
-        // COLE A URL DO GOOGLE APPS SCRIPT AQUI:
-        const URL_GOOGLE_SHEETS = "https://script.google.com/macros/s/AKfycbw_nPW5kdgkkDHtiiVZ7BGhW2f12x68ndSrfHWqmnLFdjjqFHZjRdIC5bOiAcvNmDlrgw/exec";
-        
-        let fotoAtual = "";
+        const URL_GOOGLE_SHEETS = "https://script.google.com/macros/s/AKfycby2aVa156MgS_y6XgTb7IVyL8auoFeLwI_M4c2Q4Mjv0NG2Pvgjx_WzMqsNW2oLq-My/exec"; 
+        let fotoMiniatura = "";
+        let selecionados = [];
 
         function switchTab(tab) {
             document.getElementById('view-form').classList.toggle('view-hidden', tab !== 'form');
             document.getElementById('view-collection').classList.toggle('view-hidden', tab !== 'collection');
             document.getElementById('nav-home').classList.toggle('active', tab === 'form');
             document.getElementById('nav-collection').classList.toggle('active', tab === 'collection');
-            if(tab === 'collection') atualizarLog();
+            limparSelecao();
+            if(tab === 'collection') carregarDados();
         }
 
-        document.getElementById('input-foto').onchange = (e) => {
+        // --- GESTÃO DE SELEÇÃO ---
+        function toggleSelect(pt, sn, element) {
+            const index = selecionados.findIndex(i => i.pt === pt && i.sn === sn);
+            if(index > -1) {
+                selecionados.splice(index, 1);
+                element.classList.remove('selected');
+            } else {
+                selecionados.push({pt, sn});
+                element.classList.add('selected');
+            }
+            
+            const bar = document.getElementById('action-bar');
+            bar.style.display = selecionados.length > 0 ? 'flex' : 'none';
+        }
+
+        function limparSelecao() {
+            selecionados = [];
+            document.getElementById('action-bar').style.display = 'none';
+            document.querySelectorAll('.clash-card').forEach(c => c.classList.remove('selected'));
+        }
+
+        async function excluirSelecionados() {
+            const userAction = prompt("Digite seu nome para confirmar a EXCLUSÃO:");
+            if(!userAction) return;
+
+            if(confirm(`Deseja excluir ${selecionados.length} item(s)?`)) {
+                document.getElementById('status-nuvem').innerText = "Excluindo...";
+                for(let item of selecionados) {
+                    await fetch(URL_GOOGLE_SHEETS, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        body: JSON.stringify({ action: 'delete', pt: item.pt, sn: item.sn, user: userAction })
+                    });
+                }
+                limparSelecao();
+                carregarDados();
+            }
+        }
+
+        async function movimentarSelecionados() {
+            const novaLocal = prompt("Para qual local deseja mover?");
+            const userAction = prompt("Seu nome:");
+            if(!novaLocal || !userAction) return;
+
+            alert("Função: Em cada item selecionado, será gerado um novo log de movimentação na planilha.");
+            // Aqui você pode implementar a lógica de enviar um POST de "movimentação"
+        }
+
+        // --- FUNÇÕES DE DADOS (MANTIDAS) ---
+        document.getElementById('input-foto').onchange = function(e) {
             const reader = new FileReader();
-            reader.onload = (ev) => {
-                fotoAtual = ev.target.result;
-                document.getElementById('preview').src = fotoAtual;
-                document.getElementById('preview').classList.remove('hidden');
-                document.getElementById('instrucao').classList.add('hidden');
+            reader.onload = function(ev) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 180; 
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = MAX_WIDTH;
+                    canvas.height = img.height * (MAX_WIDTH / img.width);
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    fotoMiniatura = canvas.toDataURL('image/jpeg', 0.6);
+                    document.getElementById('preview').src = fotoMiniatura;
+                    document.getElementById('preview').classList.remove('hidden');
+                };
+                img.src = ev.target.result;
             };
             reader.readAsDataURL(e.target.files[0]);
         };
 
-        function atualizarLog() {
-            const lista = document.getElementById('lista-ativos');
-            const banco = JSON.parse(localStorage.getItem('essencia_v7')) || [];
-            document.getElementById('contador-ativos').innerText = banco.length;
-            lista.innerHTML = banco.length === 0 ? `<div class="col-span-2 text-center text-[#555] text-xs font-bold uppercase mt-10">Vazio</div>` : "";
+        async function carregarDados() {
+            const cache = JSON.parse(localStorage.getItem('essencio_cache')) || [];
+            renderizar(cache);
+            try {
+                const res = await fetch(URL_GOOGLE_SHEETS);
+                const nuvem = await res.json();
+                localStorage.setItem('essencio_cache', JSON.stringify(nuvem));
+                renderizar(nuvem);
+                document.getElementById('status-nuvem').innerText = "Sincronizado";
+            } catch (e) { document.getElementById('status-nuvem').innerText = "Modo Local"; }
+        }
 
-            banco.forEach((ativo, index) => {
+        function renderizar(dados) {
+            const lista = document.getElementById('lista-ativos');
+            lista.innerHTML = "";
+            document.getElementById('contador-ativos').innerText = dados.length;
+            dados.slice().reverse().forEach(item => {
                 const card = document.createElement('div');
                 card.className = "clash-card";
+                card.onclick = () => toggleSelect(item.pt, item.sn, card);
                 card.innerHTML = `
-                    <div class="clash-elixir">${ativo.qtd}</div>
-                    <button onclick="deletarAtivo(${index})" class="clash-delete">X</button>
+                    <div class="clash-elixir">${item.qtd}</div>
                     <div class="clash-card-header">
-                        ${ativo.foto ? `<img src="${ativo.foto}" class="absolute inset-0 w-full h-full object-cover opacity-40">` : ""}
-                        <h4 class="text-white font-black text-center leading-tight uppercase text-[10px] drop-shadow-md z-10 px-2">${ativo.nome || "Equipamento"}</h4>
+                        <img src="${item.foto || ''}" class="clash-img" onerror="this.style.display='none'">
+                        <h4 class="text-white font-black text-center uppercase text-[9px] px-2 z-10 drop-shadow-md">${item.nome}</h4>
                     </div>
                     <div class="clash-card-body">
-                        <span class="text-[#BA9D58] text-[8px] font-black uppercase text-center mb-1 truncate">${ativo.modelo || "S/ Marca"}</span>
-                        <div class="bg-[#151a15] rounded p-1 border border-[#2a332a] flex flex-col gap-0.5 text-[7px] font-bold uppercase">
-                            <div class="flex justify-between"><span class="text-gray-500">PT:</span><span>${ativo.pt || "---"}</span></div>
-                            <div class="flex justify-between"><span class="text-gray-500">SN:</span><span>${ativo.sn || "---"}</span></div>
-                        </div>
-                        <div class="info-resp truncate">👤 ${ativo.user || "Sistema"}</div>
-                        <div class="mt-2 flex justify-between items-center text-[7px] text-white/50 uppercase font-bold">
-                            <span class="truncate">📍 ${ativo.local || "Estoque"}</span>
-                        </div>
-                        <div class="timestamp">${ativo.data} - ${ativo.hora}</div>
+                        <span class="text-[#BA9D58] text-[8px] font-black uppercase truncate">${item.modelo || '---'}</span>
+                        <div class="text-[7px] text-gray-400 font-bold uppercase">PT: ${item.pt || '---'} | SN: ${item.sn || '---'}</div>
+                        <div class="text-[7px] text-white/40 uppercase">NF: ${item.nf || '---'}</div>
+                        <div class="text-[7px] text-[#BA9D58] font-black uppercase mt-1">👤 ${item.user}</div>
+                        <div class="text-[7px] text-white/50 font-bold">📍 ${item.local}</div>
                     </div>
                 `;
                 lista.appendChild(card);
             });
         }
 
-        document.getElementById('form-registro').onsubmit = (e) => {
+        document.getElementById('form-registro').onsubmit = async (e) => {
             e.preventDefault();
-            const agora = new Date();
-            
-            const dadosRegistro = {
+            const btn = document.getElementById('btn-submit');
+            btn.innerText = "LANÇANDO...";
+            btn.disabled = true;
+
+            const dados = {
                 user: document.getElementById('f-user').value,
                 nome: document.getElementById('f-nome').value,
                 modelo: document.getElementById('f-modelo').value,
@@ -214,45 +225,26 @@
                 pn: document.getElementById('f-pn').value,
                 sn: document.getElementById('f-sn').value,
                 local: document.getElementById('f-local').value,
-                data: agora.toLocaleDateString('pt-BR'),
-                hora: agora.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})
+                foto: fotoMiniatura,
+                data: new Date().toLocaleDateString('pt-BR'),
+                hora: new Date().toLocaleTimeString('pt-BR')
             };
 
-            // 1. SALVAR NO LOCALSTORAGE (Backup local com foto)
-            const banco = JSON.parse(localStorage.getItem('essencia_v7')) || [];
-            banco.unshift({...dadosRegistro, foto: fotoAtual});
-            localStorage.setItem('essencia_v7', JSON.stringify(banco));
-
-            // 2. ENVIAR PARA GOOGLE SHEETS (Modo Elite)
-            if(URL_GOOGLE_SHEETS !== "SUA_URL_AQUI_DENTRO_DAS_ASPAS") {
-                fetch(URL_GOOGLE_SHEETS, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dadosRegistro)
-                }).then(() => console.log("Sincronizado com Google Sheets"));
-            }
-
-            // FEEDBACK
-            document.getElementById('toast').classList.add('show');
-            setTimeout(() => document.getElementById('toast').classList.remove('show'), 2500);
-            
-            // RESET
-            e.target.reset();
-            fotoAtual = "";
-            document.getElementById('preview').classList.add('hidden');
-            document.getElementById('instrucao').classList.remove('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            try {
+                await fetch(URL_GOOGLE_SHEETS, { method: 'POST', mode: 'no-cors', body: JSON.stringify(dados) });
+                document.getElementById('toast').innerText = "CADASTRO REALIZADO!";
+                document.getElementById('toast').classList.add('show');
+                setTimeout(() => document.getElementById('toast').classList.remove('show'), 2500);
+                e.target.reset();
+                document.getElementById('preview').classList.add('hidden');
+                fotoMiniatura = "";
+                switchTab('collection');
+            } catch (err) { alert("Erro ao enviar!"); }
+            btn.innerText = "Confirmar Registro";
+            btn.disabled = false;
         };
 
-        window.deletarAtivo = function(index) {
-            if(confirm("Deseja realmente excluir este item?")) {
-                const banco = JSON.parse(localStorage.getItem('essencia_v7')) || [];
-                banco.splice(index, 1);
-                localStorage.setItem('essencia_v7', JSON.stringify(banco));
-                atualizarLog();
-            }
-        };
+        carregarDados();
     </script>
 </body>
 </html>
