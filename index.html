@@ -2,266 +2,257 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESSENCIO | Sistema de Ativos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ESSENCIO - Gestão e Estoque</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
-        :root { --musgo: #435A42; --dourado: #BA9D58; --fundo: #0d120e; }
-        body { font-family: 'Montserrat', sans-serif; background-color: var(--fundo); color: #ffffff; margin: 0; padding-bottom: 80px; }
-        .logo-container { filter: drop-shadow(0 0 15px rgba(186, 157, 88, 0.3)); }
-        .input-style { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); color: white; transition: all 0.3s; }
-        .input-style:focus { border-color: var(--dourado); outline: none; background: rgba(255,255,255,0.06); }
-        .tab-active { color: var(--dourado); border-bottom: 2px solid var(--dourado); }
-        /* Estilos para os cartões da lista (igual sua referência) */
-        .card-ativo { background: #1e281e; border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 15px; display: flex; align-items: center; gap: 15px; margin-bottom: 10px; transition: 0.3s; }
-        .card-ativo:active { background: #2a3a2a; }
-        .card-foto { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; border: 1px solid #BA9D58; }
+        :root { 
+            --dourado: #BA9D58; 
+            --fundo: #0a0e0a; 
+            --card: #151a15; 
+            --borda: #2a332a;
+        }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--fundo); 
+            color: white; 
+            margin: 0; 
+            padding-bottom: 100px; 
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .input-container {
+            background: var(--card); border-radius: 16px; padding: 12px 20px;
+            margin-bottom: 16px; border: 1px solid var(--borda); transition: border-color 0.3s;
+        }
+        .input-container:focus-within { border-color: var(--dourado); }
+        .label-elite { 
+            font-size: 10px; font-weight: 800; color: var(--dourado); 
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; display: block;
+        }
+        .input-elite { 
+            background: transparent; border: none; width: 100%; color: white; 
+            font-weight: 900; font-size: 14px; text-transform: uppercase; outline: none; 
+        }
+        .input-elite::placeholder { color: #444; font-weight: 600; }
+
+        .btn-principal { 
+            height: 60px; border-radius: 16px; font-weight: 900; font-size: 14px;
+            text-transform: uppercase; width: 100%; background: transparent; color: white;
+            border: 2px solid var(--dourado); cursor: pointer; transition: all 0.2s; letter-spacing: 1px;
+        }
+        .btn-principal:active { background: var(--dourado); color: black; transform: scale(0.98); }
+
+        .bottom-nav {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: var(--card); border: 1px solid var(--dourado); border-radius: 30px;
+            display: flex; gap: 40px; padding: 12px 40px; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+        }
+        .nav-icon { color: #555; cursor: pointer; transition: color 0.3s; outline: none; }
+        .nav-icon.active { color: var(--dourado); }
+
+        .view-hidden { display: none !important; }
+
+        #toast { 
+            visibility: hidden; min-width: 250px; background: var(--dourado); color: black; 
+            border-radius: 30px; padding: 15px 20px; position: fixed; z-index: 5000; left: 50%; top: 20px; 
+            transform: translateX(-50%); font-weight: 900; text-align: center; text-transform: uppercase;
+            box-shadow: 0 10px 20px rgba(186,157,88, 0.3); opacity: 0; transition: opacity 0.3s, top 0.3s;
+        }
+        #toast.show { visibility: visible; opacity: 1; top: 40px; }
+
+        .clash-card {
+            position: relative; background: #111; border-radius: 12px; border: 2px solid #333;
+            overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 8px 15px rgba(0,0,0,0.8);
+        }
+        
+        .clash-card-header {
+            height: 80px; background: linear-gradient(to bottom, #2a2a2a, #0a0e0a);
+            position: relative; display: flex; align-items: center; justify-content: center;
+            border-bottom: 2px solid var(--dourado); padding: 10px;
+        }
+        .clash-elixir {
+            position: absolute; top: -6px; left: -6px; background: var(--dourado); color: black;
+            width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; 
+            justify-content: center; font-weight: 900; font-size: 12px; border: 3px solid #0a0e0a; z-index: 10;
+        }
+        .clash-delete {
+            position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.6); color: #ff4444;
+            width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; 
+            justify-content: center; font-weight: bold; font-size: 10px; cursor: pointer; border: 1px solid #ff4444; z-index: 10;
+        }
+        .clash-card-body { padding: 8px; display: flex; flex-direction: column; flex: 1; background: #0a0e0a; }
+        
+        .info-resp { font-size: 7px; color: var(--dourado); font-weight: 800; text-transform: uppercase; margin-top: 4px; }
+        .timestamp { font-size: 7px; color: #555; text-align: center; margin-top: 2px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-  <header class="py-8 px-6 flex flex-col items-center bg-gradient-to-b from-black/60 to-transparent">
-    <div class="logo-container w-24 h-24 mb-3">
-      <img src="https://i.imgur.com/LNNpmQr.jpeg" alt="Logo Essencio" class="w-full h-full object-contain">
-    </div>
-    <div class="text-center">
-      <h1 class="text-3xl font-black tracking-[0.15em] text-[#BA9D58]">ESSENCIO</h1>
-      <p class="text-[10px] font-bold uppercase tracking-[0.4em] text-[#BA9D58]/70 pt-1">TECNOLOGIA AMBIENTAL</p>
-    </div>
-  </header>
+    <div id="toast">SINCRONIZADO NA NUVEM!</div>
 
-  <nav class="flex justify-center gap-6 mb-8 px-4 border-b border-white/10">
-      <button onclick="mudarAba('cadastro')" id="tabCadastro" class="pb-2 font-bold text-xs uppercase tracking-widest tab-active">Novo Cadastro</button>
-      <button onclick="mudarAba('lista'); carregarLista();" id="tabLista" class="pb-2 font-bold text-xs uppercase tracking-widest text-white/50">Lista de Ativos</button>
-  </nav>
-
-  <main class="max-w-md mx-auto px-4">
-    
-    <div id="secaoCadastro" class="bg-white/5 p-6 rounded-[35px] border border-white/10 mb-8 shadow-2xl backdrop-blur-sm">
-      <form id="formEstoque" class="space-y-4">
-        
-        <input type="hidden" id="ativoId">
-
-        <div class="relative h-40 mb-6">
-          <input type="file" id="fotoInput" accept="image/*" capture="environment" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30">
-          <div id="fotoPreviewContainer" class="w-full h-full rounded-2xl input-style flex flex-col items-center justify-center gap-2 overflow-hidden">
-            <img id="fotoPreviewImage" src="#" class="hidden w-full h-full object-cover">
-            <div id="fotoPlaceholder" class="flex flex-col items-center text-center px-4">
-                <span class="text-3xl mb-1">📷</span>
-                <span class="text-[9px] text-white/40 font-black uppercase tracking-widest italic">Toque para (re)tirar foto</span>
+    <header class="pt-12 pb-6 text-center flex flex-col items-center">
+        <div class="w-24 h-24 bg-[#151a15] border-[3px] border-[#BA9D58] rounded-[2rem] flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(186,157,88,0.15)] overflow-hidden">
+            <div class="w-[4.5rem] h-[4.5rem] bg-white flex items-center justify-center p-1">
+                <img src="https://i.imgur.com/LNNpmQr.jpeg" alt="Logo Empresa" class="w-full h-full object-contain">
             </div>
-          </div>
+        </div>
+        <h1 class="font-black text-2xl tracking-[0.2em] text-[#BA9D58]">ESSENCIO</h1>
+        <h2 id="subtitle" class="text-[9px] font-bold tracking-[0.3em] text-white uppercase mt-2">Gestão de Ativos | Nuvem</h2>
+    </header>
+
+    <main id="view-form" class="px-6 max-w-md mx-auto">
+        <div class="relative h-32 mb-8 bg-[#151a15] rounded-2xl border border-[#2a332a] flex flex-col items-center justify-center overflow-hidden">
+            <input type="file" id="input-foto" accept="image/*" capture="environment" class="absolute inset-0 opacity-0 z-20 cursor-pointer">
+            <img id="preview" class="absolute inset-0 w-full h-full object-cover hidden z-10 opacity-70">
+            <div id="instrucao" class="text-center z-0 flex flex-col items-center">
+                <svg class="w-8 h-8 text-[#BA9D58] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <span class="text-white text-[10px] font-black tracking-widest uppercase">Scan Visual</span>
+            </div>
         </div>
 
-        <input type="text" id="nome" placeholder="MODELO DO EQUIPAMENTO" required class="w-full h-14 px-5 rounded-2xl input-style font-bold uppercase text-sm">
-        <div class="grid grid-cols-2 gap-3">
-            <input type="text" id="patrimonio" placeholder="PATRIMÔNIO (ÚNICO)" required class="w-full h-14 px-5 rounded-2xl input-style font-mono text-sm uppercase">
-            <input type="text" id="serial" placeholder="SÉRIE" required class="w-full h-14 px-5 rounded-2xl input-style font-mono text-sm uppercase">
-        </div>
-        <input type="text" id="local" placeholder="DESTINO" required class="w-full h-14 px-5 rounded-2xl input-style font-bold uppercase text-sm">
+        <form id="form-registro">
+            <div class="input-container"><label class="label-elite">Responsável pelo Registro</label><input type="text" id="f-user" placeholder="Seu nome" class="input-elite" required></div>
+            <div class="input-container"><label class="label-elite">Modelo/NOME do Ativo</label><input type="text" id="f-nome" placeholder="Nome do Equipamento" class="input-elite" required></div>
+            <div class="input-container"><label class="label-elite">Marca / Modelo Técnico</label><input type="text" id="f-modelo" placeholder="Ex: Bosch, Dell..." class="input-elite"></div>
+            <div class="flex gap-4">
+                <div class="input-container flex-1"><label class="label-elite">Patrimônio</label><input type="text" id="f-pt" placeholder="PT-000" class="input-elite"></div>
+                <div class="input-container flex-1"><label class="label-elite">Série</label><input type="text" id="f-sn" placeholder="SN-000" class="input-elite"></div>
+            </div>
+            <div class="flex gap-4">
+                <div class="input-container flex-1"><label class="label-elite">QTD</label><input type="number" id="f-qtd" value="1" class="input-elite"></div>
+                <div class="input-container flex-1"><label class="label-elite">Nota Fiscal</label><input type="text" id="f-nf" placeholder="NF-000" class="input-elite"></div>
+            </div>
+            <div class="input-container"><label class="label-elite">Part Number</label><input type="text" id="f-pn" placeholder="PN-000" class="input-elite"></div>
+            <div class="input-container"><label class="label-elite">Localização / Destino</label><input type="text" id="f-local" placeholder="Alocação atual" class="input-elite"></div>
+            <button type="submit" class="btn-principal mt-4 mb-24">Confirmar Registro </button>
+        </form>
+    </main>
 
-        <button type="submit" id="btnEnviar" class="w-full h-16 bg-[#BA9D58] text-black font-black rounded-2xl uppercase tracking-widest text-sm active:scale-95 transition-all shadow-[0_10px_20px_rgba(186,157,88,0.2)]">
-          CADASTRAR ATIVO
-        </button>
-        <button type="button" id="btnCancelarEdicao" onclick="cancelarEdicao()" class="hidden w-full h-12 bg-white/10 text-white font-bold rounded-2xl uppercase text-xs">
-          CANCELAR EDIÇÃO
-        </button>
-      </form>
-    </div>
-
-    <div id="secaoLista" class="hidden">
-        <div class="mb-5 relative">
-            <input type="text" id="inputPesquisa" onkeyup="filtrarLista()" placeholder="PESQUISAR ATIVO OU PATRIMÔNIO..." class="w-full h-12 px-5 pl-12 rounded-full input-style text-xs font-bold uppercase">
-            <span class="absolute left-5 top-1/2 -translate-y-1/2 opacity-30">🔍</span>
+    <main id="view-collection" class="px-4 max-w-md mx-auto view-hidden">
+        <div class="flex justify-between items-end mb-6 border-b border-[#2a332a] pb-2 px-2">
+            <h3 class="text-white font-black text-sm tracking-widest uppercase">Estoque Ativo</h3>
+            <span id="contador-ativos" class="text-[#BA9D58] font-black text-sm bg-[#111] px-2 py-1 rounded border border-[#333]">0</span>
         </div>
+        <div id="lista-ativos" class="grid grid-cols-2 gap-4 pb-28"></div>
+    </main>
+
+    <nav class="bottom-nav">
+        <button id="nav-home" class="nav-icon active" onclick="switchTab('form')"><svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></button>
+        <button id="nav-collection" class="nav-icon" onclick="switchTab('collection')"><svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg></button>
+    </nav>
+
+    <script>
+        // COLE A URL DO GOOGLE APPS SCRIPT AQUI:
+        const URL_GOOGLE_SHEETS = "https://script.google.com/macros/s/AKfycbw_nPW5kdgkkDHtiiVZ7BGhW2f12x68ndSrfHWqmnLFdjjqFHZjRdIC5bOiAcvNmDlrgw/exec";
         
-        <div id="listaAtivosContainer" class="space-y-3">
-            <p class="text-center text-xs text-white/40 italic py-10">Carregando estoque...</p>
-        </div>
-    </div>
-  </main>
+        let fotoAtual = "";
 
-  <script>
-    let fotoBase64Data = "";
-    let listaCompleta = []; // Guarda todos os ativos recebidos
-
-    // CONFIGURAÇÕES
-    const URL_SCRIPT_GOOGLE = "https://script.google.com/macros/s/AKfycbzvaoEmWQcfCU7xAzz29dbcZ0rc1J63t5qh-gZX3oLAA9JE93extkpyMd5e3gaaOVgFXw/exec"; // URL do Passo 1
-    const API_KEY_IMGBB = "b7eb71f8a559e9aa72a9d83ea40f712e"; // Do cadastro anterior
-
-    // 1. Alternar entre Abas
-    function mudarAba(aba) {
-        if(aba === 'cadastro') {
-            document.getElementById('secaoCadastro').classList.remove('hidden');
-            document.getElementById('secaoLista').classList.add('hidden');
-            document.getElementById('tabCadastro').classList.add('tab-active');
-            document.getElementById('tabLista').classList.remove('tab-active');
-        } else {
-            document.getElementById('secaoCadastro').classList.add('hidden');
-            document.getElementById('secaoLista').classList.remove('hidden');
-            document.getElementById('tabCadastro').classList.remove('tab-active');
-            document.getElementById('tabLista').classList.add('tab-active');
+        function switchTab(tab) {
+            document.getElementById('view-form').classList.toggle('view-hidden', tab !== 'form');
+            document.getElementById('view-collection').classList.toggle('view-hidden', tab !== 'collection');
+            document.getElementById('nav-home').classList.toggle('active', tab === 'form');
+            document.getElementById('nav-collection').classList.toggle('active', tab === 'collection');
+            if(tab === 'collection') atualizarLog();
         }
-    }
 
-    // 2. Carregar e Desenhar a Lista (Estilo sua Referência)
-    async function carregarLista() {
-        const container = document.getElementById('listaAtivosContainer');
-        container.innerHTML = '<p class="text-center text-xs text-white/40 italic py-10">Carregando estoque...</p>';
-        
-        try {
-            const res = await fetch(URL_SCRIPT_GOOGLE); // doGet do Script
-            listaCompleta = await res.json();
-            desenharLista(listaCompleta);
-        } catch(e) { container.innerHTML = '<p class="text-center text-red-500 text-xs">Erro ao conectar com a planilha.</p>'; }
-    }
-
-    function desenharLista(ativos) {
-        const container = document.getElementById('listaAtivosContainer');
-        container.innerHTML = ""; // Limpa anterior
-
-        if(ativos.length === 0) { container.innerHTML = '<p class="text-center text-xs text-white/40 italic py-10">Nenhum ativo cadastrado.</p>'; return; }
-
-        ativos.forEach(ativo => {
-            const idCurto = ativo.id.substring(ativo.id.length - 4); // Últimos 4 dígitos do ID
-            
-            // HTML do Cartão (igual sua referência)
-            container.innerHTML += `
-                <div class="card-ativo" onclick="prepararEdicao('${ativo.id}')">
-                    <img src="${ativo.foto || 'https://via.placeholder.com/60?text=S/F'}" class="card-foto">
-                    <div class="flex-1">
-                        <div class="text-[9px] text-white/40 font-bold uppercase tracking-wider mb-1">ID ÚNICO: ...${idCurto}</div>
-                        <div class="text-sm font-black uppercase tracking-tight text-[#BA9D58]">${ativo.modelo}</div>
-                        <div class="grid grid-cols-2 gap-x-3 text-[10px] text-white/70 font-bold uppercase">
-                            <span>PAT: ${ativo.patrimonio}</span>
-                            <span>S/N: ${ativo.serial}</span>
-                        </div>
-                    </div>
-                    <span class="text-[#BA9D58]/30 text-xl">➔</span>
-                </div>
-            `;
-        });
-    }
-
-    // 3. Filtrar Lista (Pesquisa)
-    function filtrarLista() {
-        const termo = document.getElementById('inputPesquisa').value.toUpperCase();
-        const filtrados = listaCompleta.filter(a => 
-            a.modelo.toUpperCase().includes(termo) || 
-            a.patrimonio.toUpperCase().includes(termo) || 
-            a.serial.toUpperCase().includes(termo)
-        );
-        desenharLista(filtrados);
-    }
-
-    // 4. Preparar Edição (Puxa os dados para o formulário)
-    function prepararEdicao(id) {
-        const ativo = listaCompleta.find(a => a.id === id);
-        if(!ativo) return;
-
-        mudarAba('cadastro'); // Volta para a aba de cadastro
-        
-        // Preenche o formulário
-        document.getElementById('ativoId').value = ativo.id;
-        document.getElementById('nome').value = ativo.modelo;
-        document.getElementById('patrimonio').value = ativo.patrimonio;
-        document.getElementById('serial').value = ativo.serial;
-        document.getElementById('local').value = ativo.local;
-        
-        // Foto
-        fotoBase64Data = ""; // Limpa nova foto
-        document.getElementById('fotoPreviewImage').src = ativo.foto;
-        document.getElementById('fotoPreviewImage').classList.remove('hidden');
-        document.getElementById('fotoPlaceholder').classList.add('hidden');
-
-        // Muda os botões
-        document.getElementById('btnEnviar').innerText = "SALVAR ALTERAÇÕES";
-        document.getElementById('btnEnviar').classList.remove('bg-[#BA9D58]');
-        document.getElementById('btnEnviar').classList.add('bg-blue-600'); // Cor de edição
-        document.getElementById('btnCancelarEdicao').classList.remove('hidden');
-    }
-
-    function cancelarEdicao() {
-        location.reload(); // Recarrega para limpar tudo
-    }
-
-    // --- CÓDIGO DO FORMULÁRIO (ATUALIZADO PARA CADASTRO/EDIÇÃO) ---
-
-    // Capturar Foto e Preview
-    document.getElementById('fotoInput').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          fotoBase64Data = event.target.result;
-          document.getElementById('fotoPreviewImage').src = fotoBase64Data;
-          document.getElementById('fotoPreviewImage').classList.remove('hidden');
-          document.getElementById('fotoPlaceholder').classList.add('hidden');
+        document.getElementById('input-foto').onchange = (e) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                fotoAtual = ev.target.result;
+                document.getElementById('preview').src = fotoAtual;
+                document.getElementById('preview').classList.remove('hidden');
+                document.getElementById('instrucao').classList.add('hidden');
+            };
+            reader.readAsDataURL(e.target.files[0]);
         };
-        reader.readAsDataURL(file);
-      }
-    });
 
-    // Enviar/Atualizar Dados
-    document.getElementById('formEstoque').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const btn = document.getElementById('btnEnviar');
-      const ativoId = document.getElementById('ativoId').value;
-      const acao = ativoId ? "atualizar" : "cadastrar"; // Define se é novo ou edição
-      
-      btn.innerText = "PROCESSANDO...";
-      btn.disabled = true;
+        function atualizarLog() {
+            const lista = document.getElementById('lista-ativos');
+            const banco = JSON.parse(localStorage.getItem('essencia_v7')) || [];
+            document.getElementById('contador-ativos').innerText = banco.length;
+            lista.innerHTML = banco.length === 0 ? `<div class="col-span-2 text-center text-[#555] text-xs font-bold uppercase mt-10">Vazio</div>` : "";
 
-      try {
-          let urlFotoCurto = "";
+            banco.forEach((ativo, index) => {
+                const card = document.createElement('div');
+                card.className = "clash-card";
+                card.innerHTML = `
+                    <div class="clash-elixir">${ativo.qtd}</div>
+                    <button onclick="deletarAtivo(${index})" class="clash-delete">X</button>
+                    <div class="clash-card-header">
+                        ${ativo.foto ? `<img src="${ativo.foto}" class="absolute inset-0 w-full h-full object-cover opacity-40">` : ""}
+                        <h4 class="text-white font-black text-center leading-tight uppercase text-[10px] drop-shadow-md z-10 px-2">${ativo.nome || "Equipamento"}</h4>
+                    </div>
+                    <div class="clash-card-body">
+                        <span class="text-[#BA9D58] text-[8px] font-black uppercase text-center mb-1 truncate">${ativo.modelo || "S/ Marca"}</span>
+                        <div class="bg-[#151a15] rounded p-1 border border-[#2a332a] flex flex-col gap-0.5 text-[7px] font-bold uppercase">
+                            <div class="flex justify-between"><span class="text-gray-500">PT:</span><span>${ativo.pt || "---"}</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">SN:</span><span>${ativo.sn || "---"}</span></div>
+                        </div>
+                        <div class="info-resp truncate">👤 ${ativo.user || "Sistema"}</div>
+                        <div class="mt-2 flex justify-between items-center text-[7px] text-white/50 uppercase font-bold">
+                            <span class="truncate">📍 ${ativo.local || "Estoque"}</span>
+                        </div>
+                        <div class="timestamp">${ativo.data} - ${ativo.hora}</div>
+                    </div>
+                `;
+                lista.appendChild(card);
+            });
+        }
 
-          // Se tiver foto nova (Base64), envia pro ImgBB
-          if(fotoBase64Data && fotoBase64Data.startsWith("data:")) {
-              btn.innerText = "ENVIANDO IMAGEM...";
-              const base64Limpo = fotoBase64Data.split(',')[1];
-              let formData = new FormData();
-              formData.append("image", base64Limpo);
+        document.getElementById('form-registro').onsubmit = (e) => {
+            e.preventDefault();
+            const agora = new Date();
+            
+            const dadosRegistro = {
+                user: document.getElementById('f-user').value,
+                nome: document.getElementById('f-nome').value,
+                modelo: document.getElementById('f-modelo').value,
+                qtd: document.getElementById('f-qtd').value,
+                nf: document.getElementById('f-nf').value,
+                pt: document.getElementById('f-pt').value,
+                pn: document.getElementById('f-pn').value,
+                sn: document.getElementById('f-sn').value,
+                local: document.getElementById('f-local').value,
+                data: agora.toLocaleDateString('pt-BR'),
+                hora: agora.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})
+            };
 
-              const resImg = await fetch(`https://api.imgbb.com/1/upload?key=${API_KEY_IMGBB}`, {
-                  method: "POST",
-                  body: formData
-              });
-              const jsonImg = await resImg.json();
-              urlFotoCurto = jsonImg.data.url;
-          }
+            // 1. SALVAR NO LOCALSTORAGE (Backup local com foto)
+            const banco = JSON.parse(localStorage.getItem('essencia_v7')) || [];
+            banco.unshift({...dadosRegistro, foto: fotoAtual});
+            localStorage.setItem('essencia_v7', JSON.stringify(banco));
 
-          btn.innerText = "SALVANDO DADOS...";
+            // 2. ENVIAR PARA GOOGLE SHEETS (Modo Elite)
+            if(URL_GOOGLE_SHEETS !== "SUA_URL_AQUI_DENTRO_DAS_ASPAS") {
+                fetch(URL_GOOGLE_SHEETS, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dadosRegistro)
+                }).then(() => console.log("Sincronizado com Google Sheets"));
+            }
 
-          // Dados completos (incluindo a ação e ID se houver)
-          const dados = {
-            acao: acao,
-            id: ativoId,
-            modelo: document.getElementById('nome').value.toUpperCase(),
-            patrimonio: document.getElementById('patrimonio').value.toUpperCase(),
-            serial: document.getElementById('serial').value.toUpperCase(),
-            local: document.getElementById('local').value,
-            // Envia a foto apenas se uma nova foi tirada
-            foto: urlFotoCurto 
-          };
+            // FEEDBACK
+            document.getElementById('toast').classList.add('show');
+            setTimeout(() => document.getElementById('toast').classList.remove('show'), 2500);
+            
+            // RESET
+            e.target.reset();
+            fotoAtual = "";
+            document.getElementById('preview').classList.add('hidden');
+            document.getElementById('instrucao').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
 
-          // Envia para o doPost do Script do Google
-          await fetch(URL_SCRIPT_GOOGLE, {
-            method: 'POST',
-            mode: 'no-cors', // Mantido para o Google Sheets
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dados)
-          });
-
-          alert(acao === "cadastrar" ? "Ativo cadastrado!" : "Ativo atualizado!");
-          location.reload(); // Limpa e volta ao estado inicial
-
-      } catch (err) {
-          alert("Erro no processo. Verifique conexão e chaves.");
-          btn.innerText = ativoId ? "SALVAR ALTERAÇÕES" : "CADASTRAR ATIVO";
-          btn.disabled = false;
-      }
-    });
-  </script>
+        window.deletarAtivo = function(index) {
+            if(confirm("Deseja realmente excluir este item?")) {
+                const banco = JSON.parse(localStorage.getItem('essencia_v7')) || [];
+                banco.splice(index, 1);
+                localStorage.setItem('essencia_v7', JSON.stringify(banco));
+                atualizarLog();
+            }
+        };
+    </script>
 </body>
 </html>
