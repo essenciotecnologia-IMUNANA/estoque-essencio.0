@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0e0a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    
+    <title>ESSENCIO - Gestão e Estoque</title>
+    
+    <link rel="manifest" href="manifest.json">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { --dourado: #BA9D58; --fundo: #0a0e0a; --card: #151a15; --borda: #2a332a; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--fundo); color: white; margin: 0; padding-bottom: 100px; -webkit-font-smoothing: antialiased; }
+        .input-container { background: var(--card); border-radius: 16px; padding: 12px 20px; margin-bottom: 16px; border: 1px solid var(--borda); }
+        .label-elite { font-size: 10px; font-weight: 800; color: var(--dourado); text-transform: uppercase; margin-bottom: 4px; display: block; }
+        .input-elite { background: transparent; border: none; width: 100%; color: white; font-weight: 900; font-size: 14px; text-transform: uppercase; outline: none; }
+        .btn-principal { height: 60px; border-radius: 16px; font-weight: 900; background: transparent; color: white; border: 2px solid var(--dourado); width: 100%; text-transform: uppercase; }
+        .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--dourado); border-radius: 30px; display: flex; gap: 40px; padding: 12px 40px; z-index: 1000; }
+        .nav-icon { color: #555; }
+        .nav-icon.active { color: var(--dourado); }
+        .view-hidden { display: none !important; }
+        #toast { visibility: hidden; background: var(--dourado); color: black; border-radius: 30px; padding: 15px; position: fixed; left: 50%; top: 20px; transform: translateX(-50%); font-weight: 900; opacity: 0; transition: 0.3s; z-index: 5000; }
+        #toast.show { visibility: visible; opacity: 1; top: 40px; }
+        .clash-card { background: #111; border-radius: 12px; border: 2px solid #333; overflow: hidden; position: relative; }
+        .clash-elixir { position: absolute; top: -6px; left: -6px; background: var(--dourado); color: black; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; border: 3px solid #0a0e0a; z-index: 10; }
+        .clash-delete { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.6); color: #ff4444; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid #ff4444; z-index: 10; }
+    </style>
+</head>
+<body>
+
+    <div id="toast">SINCRONIZADO NA NUVEM!</div>
+
+    <header class="pt-12 pb-6 text-center flex flex-col items-center">
+        <div class="w-24 h-24 bg-[#151a15] border-[3px] border-[#BA9D58] rounded-[2rem] flex items-center justify-center mb-4 overflow-hidden">
+            <img src="https://i.imgur.com/LNNpmQr.jpeg" alt="Logo" class="w-full h-full object-cover">
+        </div>
+        <h1 class="font-black text-2xl tracking-[0.2em] text-[#BA9D58]">ESSENCIO</h1>
+    </header>
+
+    <main id="view-form" class="px-6 max-w-md mx-auto">
+        <div class="relative h-32 mb-8 bg-[#151a15] rounded-2xl border border-[#2a332a] flex items-center justify-center overflow-hidden">
+            <input type="file" id="input-foto" accept="image/*" capture="environment" class="absolute inset-0 opacity-0 z-20">
+            <img id="preview" class="absolute inset-0 w-full h-full object-cover hidden z-10 opacity-70">
+            <span class="text-white text-[10px] font-black uppercase tracking-widest">Scan Visual</span>
+        </div>
+
+        <form id="form-registro">
+            <div class="input-container"><label class="label-elite">Responsável</label><input type="text" id="f-user" class="input-elite" required></div>
+            <div class="input-container"><label class="label-elite">Modelo/NOME</label><input type="text" id="f-nome" class="input-elite" required></div>
+            <div class="input-container"><label class="label-elite">Marca / Modelo Técnico</label><input type="text" id="f-modelo" class="input-elite"></div>
+            <div class="flex gap-4">
+                <div class="input-container flex-1"><label class="label-elite">Patrimônio</label><input type="text" id="f-pt" class="input-elite"></div>
+                <div class="input-container flex-1"><label class="label-elite">Série</label><input type="text" id="f-sn" class="input-elite"></div>
+            </div>
+            <div class="flex gap-4">
+                <div class="input-container flex-1"><label class="label-elite">QTD</label><input type="number" id="f-qtd" value="1" class="input-elite"></div>
+                <div class="input-container flex-1"><label class="label-elite">Nota Fiscal</label><input type="text" id="f-nf" class="input-elite"></div>
+            </div>
+            <div class="input-container"><label class="label-elite">Part Number</label><input type="text" id="f-pn" class="input-elite"></div>
+            <div class="input-container"><label class="label-elite">Localização</label><input type="text" id="f-local" class="input-elite"></div>
+            <button type="submit" class="btn-principal mt-4 mb-24">Confirmar Registro</button>
+        </form>
+    </main>
+
+    <main id="view-collection" class="px-4 max-w-md mx-auto view-hidden">
+        <div class="flex justify-between items-end mb-6 border-b border-[#2a332a] pb-2 px-2">
+            <h3 class="text-white font-black text-sm uppercase">Estoque Ativo</h3>
+            <span id="contador-ativos" class="text-[#BA9D58] font-black text-sm">0</span>
+        </div>
+        <div id="lista-ativos" class="grid grid-cols-2 gap-4 pb-28"></div>
+    </main>
+
+    <nav class="bottom-nav">
+        <button id="nav-home" class="nav-icon active" onclick="switchTab('form')"><svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></button>
+        <button id="nav-collection" class="nav-icon" onclick="switchTab('collection')"><svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg></button>
+    </nav>
+
+    <script>
+        // REGISTRO DO SERVICE WORKER
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+
+        const URL_GOOGLE_SHEETS = "https://script.google.com/macros/s/AKfycbw_nPW5kdgkkDHtiiVZ7BGhW2f12x68ndSrfHWqmnLFdjjqFHZjRdIC5bOiAcvNmDlrgw/exec";
+        let fotoAtual = "";
+
+        function switchTab(tab) {
+            document.getElementById('view-form').classList.toggle('view-hidden', tab !== 'form');
+            document.getElementById('view-collection').classList.toggle('view-hidden', tab !== 'collection');
+            document.getElementById('nav-home').classList.toggle('active', tab === 'form');
+            document.getElementById('nav-collection').classList.toggle('active', tab === 'collection');
+            if(tab === 'collection') atualizarLog();
+        }
+
+        document.getElementById('input-foto').onchange = (e) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                fotoAtual = ev.target.result;
+                document.getElementById('preview').src = fotoAtual;
+                document.getElementById('preview').classList.remove('hidden');
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        };
+
+        function atualizarLog() {
+            const lista = document.getElementById('lista-ativos');
+            const banco = JSON.parse(localStorage.getItem('essencia_v7')) || [];
+            document.getElementById('contador-ativos').innerText = banco.length;
+            lista.innerHTML = banco.length === 0 ? `<div class="col-span-2 text-center text-[#555] text-xs font-bold uppercase mt-10">Vazio</div>` : "";
+
+            banco.forEach((ativo, index) => {
+                const card = document.createElement('div');
+                card.className = "clash-card";
+                card.innerHTML = `
+                    <div class="clash-elixir">${ativo.qtd}</div>
+                    <button onclick="deletarAtivo(${index})" class="clash-delete">X</button>
+                    <div class="h-20 bg-[#222] border-b-2 border-[#BA9D58] relative">
+                        ${ativo.foto ? `<img src="${ativo.foto}" class="w-full h-full object-cover opacity-40">` : ""}
+                        <h4 class="absolute bottom-1 left-2 text-white font-black uppercase text-[9px] z-10">${ativo.nome}</h4>
+                    </div>
+                    <div class="p-2 bg-[#0a0e0a] text-[7px] font-bold uppercase">
+                        <div class="text-[#BA9D58] mb-1">${ativo.modelo}</div>
+                        <div class="flex justify-between text-gray-500"><span>PT: ${ativo.pt}</span><span>SN: ${ativo.sn}</span></div>
+                    </div>
+                `;
+                lista.appendChild(card);
+            });
+        }
+
+        document.getElementById('form-registro').onsubmit = (e) => {
+            e.preventDefault();
+            const agora = new Date();
+            const dadosRegistro = {
+                user: document.getElementById('f-user').value,
+                nome: document.getElementById('f-nome').value,
+                modelo: document.getElementById('f-modelo').value,
+                qtd: document.getElementById('f-qtd').value,
+                nf: document.getElementById('f-nf').value,
+                pt: document.getElementById('f-pt').value,
+                pn: document.getElementById('f-pn').value,
+                sn: document.getElementById('f-sn').value,
+                local: document.getElementById('f-local').value,
+                data: agora.toLocaleDateString('pt-BR'),
+                hora: agora.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})
+            };
+            
+            const banco = JSON.parse(localStorage.getItem('essencia_v7')) || [];
+            banco.unshift({...dadosRegistro, foto: fotoAtual});
+            localStorage.setItem('essencia_v7', JSON.stringify(banco));
+
+            fetch(URL_GOOGLE_SHEETS, { method: 'POST', mode: 'no-cors', body: JSON.stringify(dadosRegistro) });
+
+            document.getElementById('toast').classList.add('show');
+            setTimeout(() => document.getElementById('toast').classList.remove('show'), 2500);
+            e.target.reset();
+            fotoAtual = "";
+            document.getElementById('preview').classList.add('hidden');
+        };
+
+        window.deletarAtivo = function(index) {
+            if(confirm("Excluir?")) {
+                const banco = JSON.parse(localStorage.getItem('essencia_v7')) || [];
+                banco.splice(index, 1);
+                localStorage.setItem('essencia_v7', JSON.stringify(banco));
+                atualizarLog();
+            }
+        };
+    </script>
+</body>
+</html>
